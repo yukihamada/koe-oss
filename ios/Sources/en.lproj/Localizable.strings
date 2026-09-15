@@ -1,0 +1,270 @@
+/* Koe — English. Keys are the Japanese development-language literals. Keep in sync with ja.lproj. */
+
+/* Tabs */
+"ライブ" = "Live";
+"トーク" = "Talk";
+"友だち" = "Friends";
+"録る" = "Record";
+"わたし" = "Me";
+"設定" = "Settings";
+
+/* Migration notice (existing testers, shown once) */
+"録る場所が、まんなかに来ました" = "Recording now has its own home";
+"声のことは全部「録る」から。\nあなたのことは「わたし」に。友だちは「トーク」の上のタブから会えます。" = "Everything voice-related starts from Record.\nYour profile lives in Me. Friends are a tab away, inside Talk.";
+"わかった" = "Got it";
+
+/* WebView (loading) */
+"つながりませんでした" = "Could not connect";
+"電波のよいところで、もう一度お試しください。" = "Please try again where the connection is better.";
+"もう一度" = "Try again";
+"声をあつめています…" = "Gathering voices…";
+
+/* Record & share (SendView) */
+"声を録ってシェア" = "Record & share your voice";
+"タップして話す" = "Tap to talk";
+"聞いています（もう一度タップで送る）" = "Listening (tap again to send)";
+"🎙 声をこねています…" = "🎙 Shaping your voice…";
+"✨ ことばを整えています…" = "✨ Polishing the words…";
+"🔥 あなたの声にしています…" = "🔥 Making it sound like you…";
+"🎧 もうすぐ、できます…" = "🎧 Almost ready…";
+"「%@」" = "“%@”";
+"できた声" = "Your voice clip";
+"共有して送る" = "Share & send";
+"リンクをコピー" = "Copy link";
+"コピーしました" = "Copied";
+"メッセージの作り方" = "How your message is crafted";
+"作り方" = "Mode";
+"声のプロンプト（どう作るか）" = "Voice prompt (how to compose)";
+"例: 丁寧に / 短く / 感謝を込めて" = "e.g. polite / short / with gratitude";
+"言った内容をこの指示で“送る文”に作りかえます。" = "Rewrites what you said into the outgoing message, following this instruction.";
+"言いよどみを消して聴きやすく整えます（意味はそのまま）。" = "Cleans up fillers so it is easy to listen to (meaning unchanged).";
+"文字で書いて送る" = "Type & send";
+"ここに入力してもOK" = "You can also type here";
+"生成中…" = "Generating…";
+"声にする" = "Make it voice";
+"どの声で" = "Which voice";
+"言語（あなたの声のまま）" = "Language (still your voice)";
+"言語" = "Language";
+"日本語で話す/書くと、%@ に翻訳してあなたの声で話します。" = "Speak or write in Japanese and it is translated to %@ — spoken in your own voice.";
+"だれに（任意）" = "To (optional)";
+"送った相手は、このリンクから声で返信できます。届いた返信は受信箱に入ります。" = "Whoever you send this to can reply back with their own voice using this link — it lands in your inbox.";
+"「わたし」＞「プロフィール」でハンドルを登録すると、相手が声で返信できるリンクも一緒に送れるようになります。" = "Set a handle under Me > Profile to also send a link the recipient can use to talk back.";
+"🎙 返信はこちらから: %@" = "🎙 Reply here: %@";
+"あつめ / @account" = "name / @account";
+
+/* Speech & recording errors */
+"マイクと音声認識を許可してください（設定 > Koe）。" = "Please allow microphone and speech recognition (Settings > Koe).";
+"音声認識が利用できません。" = "Speech recognition is unavailable.";
+"オーディオの初期化に失敗しました。" = "Failed to initialize audio.";
+"マイクの開始に失敗しました。" = "Could not start the microphone.";
+"マイクの許可が必要です。設定アプリでKoeにマイクを許可してください。" = "Microphone permission is required. Allow it for Koe in the Settings app.";
+"録音を開始できませんでした。" = "Could not start recording.";
+
+/* Voice & craft labels */
+"優貴 (yuki)" = "Yuki";
+"健太郎 (kentaro)" = "Kentaro";
+"そのまま" = "As is";
+"整える" = "Tidy";
+"まかせる" = "Compose";
+"丁寧で温かいメッセージにして" = "Make it polite and warm";
+
+/* Player */
+"声を読み込み中…" = "Loading voice…";
+"再生できませんでした" = "Could not play";
+"再生中…" = "Playing…";
+"タップしてきく" = "Tap to listen";
+
+/* API errors */
+"アクセストークンが未設定です。「わたし」＞「アカウント」で入力してください。" = "No access token yet. Enter one under Me > Account.";
+"声を作る権限がありません。「わたし」＞「アカウント」でトークンをご確認ください。" = "Not authorized to create voice. Check your token under Me > Account.";
+"少し混み合っています。数秒おいてもう一度お試しください。" = "A bit busy right now. Please try again in a few seconds.";
+"サーバーが混み合っています。少し待ってからお試しください。" = "The server is busy. Please try again shortly.";
+"うまく送れませんでした (%d)。もう一度お試しください。" = "Could not send (%d). Please try again.";
+"応答の解析に失敗しました。" = "Failed to parse the response.";
+"URL が不正です。" = "Invalid URL.";
+"応答が空です。" = "Empty response.";
+
+/* Settings (SettingsView) */
+"アクセストークン" = "Access Token";
+"Bearer トークンを入力" = "Enter Bearer token";
+"保存" = "Save";
+"保存しました" = "Saved";
+"設定済み" = "Set";
+"未設定" = "Not set";
+"送り主の名前" = "Sender name";
+"from_name (例: 優貴)" = "Your name (e.g. Yuki)";
+"話すだけで声のクリップを作り、Koeを使っていない相手にも、ふだんのメッセージアプリでそのまま送れます。" = "Just talk to create a voice clip and share it with anyone — even people not on Koe — through your usual messaging apps.";
+"一斉送信（β）" = "Broadcast (β)";
+"同じメッセージのテンプレートから、ひとりひとり名前入りの声を作って送れます。" = "From one message template, create a personalized clip for each person — with their own name.";
+"公開プロフィール" = "Public profile";
+"@ハンドル (例: yuki)" = "@handle (e.g. yuki)";
+"ハンドルを入れると、あなたの公開ページへのリンクがここに出ます。" = "Enter a handle and a link to your public page appears here.";
+"声を登録" = "Register your voice";
+"登録する声" = "Voice to register";
+"登録を開始" = "Start registration";
+"このフレーズを読み上げて録音してください:" = "Read this phrase aloud and record it:";
+"■ 録音を止める" = "■ Stop recording";
+"● 録音する" = "● Record";
+"録音を送信して照合" = "Submit recording for verification";
+"エラー: %@" = "Error: %@";
+"録音がありません。" = "No recording yet.";
+"声の登録に成功しました。" = "Your voice was registered successfully.";
+"照合に失敗しました。もう一度お試しください。" = "Verification failed. Please try again.";
+
+/* Broadcast (BroadcastView) */
+"メッセージ（全員共通）" = "Message (same for everyone)";
+"名前を入れる" = "Insert name";
+"「{name}」がひとりひとりの名前に置きかわります。声＝%@" = "“{name}” becomes each person's name. Voice = %@";
+"だれに（1行に1人 / カンマ区切り）" = "To (one per line / comma separated)";
+"健太郎\n愛\n村田" = "Kentaro\nAi\nMurata";
+"%lld人に送ります" = "Sending to %lld people";
+"作成中… %lld/%lld" = "Creating… %lld/%lld";
+"全員ぶん声をつくる" = "Create a clip for everyone";
+"全員ぶん声をつくる（%lld人）" = "Create a clip for everyone (%lld)";
+"できた（%lld人）" = "Done (%lld)";
+"全部コピー" = "Copy all";
+"{name}さん、いつもありがとう。" = "{name}, thank you for everything.";
+"作成できませんでした。トークンや接続をご確認ください。" = "Could not create the clips. Check your token and connection.";
+"%d人ぶん失敗しました：%@" = "Failed for %d people: %@";
+
+/* 🌊 Mic anywhere (SOLUNA) */
+"🌊 どこでもマイク" = "🌊 Mic Anywhere";
+"🌊 どこでもマイク（SOLUNA）" = "🌊 Mic Anywhere (SOLUNA)";
+"どこでもマイクを使う" = "Use mic anywhere";
+"このiPhoneが、開きっぱなしのマイクとスピーカーになります。画面ロック中も動きます。" = "This iPhone becomes an always-open mic and speaker. It keeps working while the screen is locked.";
+"なまえ / ID" = "Name / ID";
+"なまえ / ID (例: kenny)" = "Name / ID (e.g. kenny)";
+"アクセスキー" = "Access key";
+"アクセスキーを入力" = "Enter access key";
+"Koeのトークンをアクセスキーとして使います。" = "Your Koe token is used as the access key.";
+"はじめる" = "Start";
+"とめる" = "Stop";
+"閉じる" = "Close";
+"ログアウト（ID・キーを消す）" = "Log out (clear ID & key)";
+"サーバーURL" = "Server URL";
+"なまえ / ID を入れてください。" = "Please enter your name / ID.";
+"アクセスキーを入れてください。" = "Please enter your access key.";
+"%@ でつないでいます" = "Connected as %@";
+"オフ" = "Off";
+"接続中…" = "Connecting…";
+"接続済み" = "Connected";
+"再接続します…" = "Reconnecting…";
+"マイクの許可が必要です。" = "Microphone permission is required.";
+"サーバーURLが正しくありません。" = "The server URL is invalid.";
+"サーバーURLはwss://で始まる必要があります(常時マイク音声を暗号化なしで送らないため)。" = "The server URL must start with wss:// (the always-on mic audio is never sent unencrypted).";
+
+/* 🎙 Voice recorder (VoiceRecorderStudio) */
+"ボイスレコーダー" = "Voice Recorder";
+"メモを録音して自動で文字起こしします。文字起こしはそのまま開発への要望として送れます。" = "Record a memo and it's auto-transcribed. You can send the transcript straight to Koe's dev team as a feature request.";
+"録音履歴" = "History";
+"文字起こし中…" = "Transcribing…";
+"文字起こし失敗" = "Transcription failed";
+"開発に送信済み" = "Sent to dev";
+"再生" = "Play";
+"停止" = "Stop";
+"文字起こし" = "Transcript";
+"文字起こしに失敗しました。" = "Transcription failed.";
+"（文字起こしなし）" = "(No transcript)";
+"開発に送る" = "Send to dev";
+"この文字起こしを開発依頼として優貴に送ります(LINE/通知が届きます)。" = "Sends this transcript to Yuki as a dev request (he'll get a LINE/push notification).";
+"もう一度送る" = "Send again";
+"送りました。" = "Sent.";
+"録音" = "Recording";
+"音声認識が許可されていません。" = "Speech recognition permission was not granted.";
+
+/* 🧑 Me tab (MeView) */
+"名前を設定" = "Set your name";
+"公開ページ未設定" = "No public page yet";
+"プロフィール" = "Profile";
+"パーソナリティー" = "Host tools";
+"アカウント" = "Account";
+"どこでもマイク" = "Mic Anywhere";
+"じぶんの声" = "My voice";
+
+/* 🎭 Personality hub (PersonalityHubView) */
+"番組・台本" = "Show & Script";
+"スタジオ" = "Studio";
+"何を話すか・台本・受信箱をまとめて管理します。" = "Manage what to say, scripts, and your inbox in one place.";
+"収録した声を確認・削除します。" = "Review and delete recorded voice clips.";
+"自分の声で笑い声やリアクションを録音して、番組のSFX素材バンクに積みます。" = "Record laughs and reactions in your own voice for the show's SFX bank.";
+
+/* 🎙 Record hub (RecordHubView) */
+"まず、じぶんの声をつくりませんか" = "Want to make your voice first?";
+"3分で終わります。声を登録すると、話した言葉がその声で届けられます。" = "Takes about 3 minutes. Once registered, your typed or spoken words can be delivered in your own voice.";
+"この言葉を、どうする？" = "What should these words become?";
+"とどける" = "Send it";
+"あとで" = "Later";
+"録音中、%@経過" = "Recording, %@ elapsed";
+"この文字起こしを、声のクリップにして誰かに届けます。" = "Turn this transcript into a voice clip and send it to someone.";
+"その他の送り方" = "More ways to send";
+"もう一度文字起こす" = "Retry transcription";
+"文字起こしがタイムアウトしました。" = "Transcription timed out.";
+
+// 😄 Laugh/reaction recorder (2026-07-20)
+"管理者トークン" = "Admin token";
+"この機能はパーソナリティー限定です。管理者トークンが必要です(優貴に聞いてください)。" = "This feature is for hosts/personalities only. Ask Yuki for the admin token.";
+"声の人" = "Voice";
+"笑い声・リアクション" = "Laughs & reactions";
+"録音は自分の声だけ。そのまま番組のSFX素材として使われます。" = "Only your own voice. Recordings go straight into the show's SFX bank.";
+"笑い声・リアクション録音" = "Laugh & Reaction Recorder";
+"パーソナリティー限定。自分の声で笑い声やリアクションを録音して、番組のSFX素材バンクに積みます。" = "Hosts only. Record laughs and reactions in your own voice for the show's SFX bank.";
+"停止して保存" = "Stop & Save";
+"録音する" = "Record";
+"録音できていませんでした。もう一度どうぞ。" = "Nothing was recorded. Please try again.";
+
+/* 🏠 Log tab (VoiceLogFeedView) — setlog-style room sharing mock */
+"ログ" = "Log";
+"うちのルーム 🏠" = "Our Room 🏠";
+"今日の声ログ" = "Today's voice log";
+"みんなの今日、きいてみる" = "Listen to everyone's day";
+"まだ誰もいないよ。最初の声をおいてみない？" = "Nobody here yet. Want to leave the first voice?";
+"%lldこ集まったよ。順番に流れます" = "%lld clips collected. They'll play in order.";
+"まだ誰もいないよ" = "Nobody here yet";
+"最初の声をおいてみませんか？\n15秒だけでいいんです。" = "Want to leave the first voice?\nJust 15 seconds is enough.";
+"いまの声を\nおいておく" = "Leave your voice\nright here";
+"15秒だけでいい" = "Just 15 seconds";
+"声だけ・15秒まで・編集なし。聞き逃しても、返さなくてもだいじょうぶ。" = "Voice only. 15 seconds max. No editing. It's fine to miss one — no need to reply.";
+"ルームに招待する" = "Invite to room";
+"このPINを教えた人だけが入れます。20人まで。" = "Only people you share this PIN with can join. Up to 20.";
+"PINをコピー" = "Copy PIN";
+"シェア" = "Share";
+"Koeのルームに入って！PIN: %@" = "Join my Koe room! PIN: %@";
+"さっき" = "Just now";
+"%lld分前" = "%lld min ago";
+"%lld時間前" = "%lld hr ago";
+"%lld日前" = "%lld days ago";
+"わたし" = "me";
+"閉じる" = "Close";
+
+/* Accessibility */
+"みんなの声ログを順番に再生" = "Play everyone's voice logs in order";
+"ルームに招待する" = "Invite to room";
+"声を録音してルームに置く" = "Record and place voice in room";
+"タップで停止" = "Tap to stop";
+"タップで再生" = "Tap to play";
+"%@の声、%@、%d秒" = "%@'s voice, %@, %d seconds";
+"ルームをつくる" = "Create room";
+"最初の声をおく" = "Leave the first voice";
+"みんなの声ログを順番に再生" = "Play everyone's voice logs in order";
+"話すと、声になる" = "Speak, and it becomes a voice";
+"「録る」で話すと、その声のまま届けられます。文字を打つ必要はありません。" = "Talk in \"Record\" and it gets delivered exactly as your voice. No typing needed.";
+"とどける" = "Deliver it";
+"録り終えたら「とどける」か「開発に送る」を選ぶだけ。迷ったら、あとで履歴から選べます。" = "After recording, just pick \"Deliver\" or \"Send to dev\". Not sure? You can decide later from history.";
+"トークと友だち" = "Talk and Friends";
+"「トーク」で会話、「友だち」でつながる。上のタブで切り替えられます。" = "Chat in \"Talk\", connect in \"Friends\" — switch with the tab up top.";
+"わたし" = "Me";
+"声の登録やアカウントは「わたし」に。困ったときはここに戻ってください。" = "Voice registration and your account live in \"Me\". Come back here if you get stuck.";
+"はじめる" = "Get started";
+"次へ" = "Next";
+"スキップ" = "Skip";
+"更新: %@前" = "Updated %@ ago";
+"要対応 %d件" = "%d need attention";
+"閉じる" = "Close";
+"いまは特にありません" = "Nothing right now";
+"ルームに招待する" = "Invite to room";
+"声を録音してルームに置く" = "Record and place voice in room";
+"タップで停止" = "Tap to stop";
+"タップで再生" = "Tap to play";
+"%@の声、%@、%d秒" = "%@'s voice, %@, %d seconds";
+"ルームをつくる" = "Create room";
+"最初の声をおく" = "Leave the first voice";

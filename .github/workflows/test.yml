@@ -24,3 +24,19 @@ jobs:
           pip install -e ".[dev]"
       - name: Test
         run: pytest -q
+
+  interop:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Contract tests
+        run: pytest tests/test_interop.py tests/test_pairing.py -q
+      - name: iOS sync drift (skipped without upstream checkout)
+        run: python tools/sync_ios.py check

@@ -11,7 +11,9 @@ import os
 from pathlib import Path
 from typing import Dict, Optional
 
-from fastapi import FastAPI, HTTPException
+import time
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -476,3 +478,70 @@ def get_audio(path: str):
     if not target.exists():
         raise HTTPException(status_code=404, detail="audio not found")
     return FileResponse(str(target), media_type="audio/wav")
+
+
+# ------------------------------------------------------------------- pairing
+# LAN access to the local voice. Off by default; see core/pairing.py for the
+# threat model. Start one with POST /pair/start, then the phone redeems the
+# code and calls /remote/synth with the returned token.
+
+def _pairings():
+    from ..core.pairing import PairingStore
+
+    return PairingStore(_store().dir / "pairings.json")
+
+
+@app.post("/pair/start")
+def pair_start(body: dict) -> dict:
+    ttl = int(body.get("ttl", 900))
+    p = _pairings().start(label=str(body.get("label", ""))[:60], ttl=ttl)
+    return {
+        "code": p.code,
+        "expires_at": p.expires_at,
+        "expires_in": int(p.expires_at - time.time()),
+    }
+
+
+@app.post("/pair/redeem")
+def pair_redeem(body: dict) -> dict:
+    p = _pairings().redeem(str(body.get("code", "")))
+    if p is None:
+        raise HTTPException(status_code=401, detail="invalid or expired code")
+    return {"token": p.token, "expires_at": p.expires_at}
+
+
+@app.get("/pair/active")
+def pair_active() -> dict:
+    return {"pairings": _pairings().active()}
+
+
+@app.post("/pair/revoke")
+def pair_revoke(body: dict) -> dict:
+    ok = _pairings().revoke(str(body.get("token", "")))
+    if not ok:
+        raise HTTPException(status_code=404, detail="unknown token")
+    return {"revoked": True}
+
+
+@app.post("/pair/revoke-all")
+def pair_revoke_all() -> dict:
+    return {"revoked": _pairings().revoke_all()}
+
+
+@app.post("/remote/synth")
+def remote_synth(body: SynthIn, request: Request) -> dict:
+    """Same as /synth but authenticated with a pairing token.
+
+    Deliberately a separate route: the local UI must never require a token,
+    and a remote caller must always have one.
+    """
+    from ..core.pairing import require_token
+
+    try:
+        require_token(_pairings(), request.headers.get("authorization"))
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    r = synth(body)  # same gate, same dictionary, same engine
+    _pairings().touch(request.headers.get("authorization", "").split(" ")[-1])
+    return r

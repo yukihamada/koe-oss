@@ -1,0 +1,3 @@
+/* Koe — 許可ダイアログ(日本語)。Info.plist の既定値と同一。 */
+"NSMicrophoneUsageDescription" = "あなたの声を録音して、声メッセージの送信や声の登録に使います。";
+"NSSpeechRecognitionUsageDescription" = "ハンズフリーで話した内容を文字にして、声メッセージを作るために使います。";

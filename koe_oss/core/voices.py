@@ -41,7 +41,7 @@ __all__ = [
     "STALE",
 ]
 
-CONSENT_VERSION = "2026-09-15"
+CONSENT_VERSION = "2026-09-10"
 
 NONE = "none"
 CURRENT = "current"

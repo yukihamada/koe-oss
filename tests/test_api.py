@@ -258,3 +258,92 @@ def test_synth_without_engine_503(client, tmp_path, monkeypatch):
     r = client.post("/synth", json={"voice_id": "yuki", "text": "こんにちは"})
     assert r.status_code == 422
     assert r.json()["detail"]["reason"] == "engine_missing"
+
+
+# ------------------------------------------------------------------ pairing
+def test_pair_start_returns_code(client):
+    r = client.post("/pair/start", json={"label": "phone"})
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["code"]) == 6
+    assert body["expires_in"] > 0
+
+
+def test_redeem_exchanges_code_for_token(client):
+    code = client.post("/pair/start", json={}).json()["code"]
+    r = client.post("/pair/redeem", json={"code": code})
+    assert r.status_code == 200
+    assert len(r.json()["token"]) > 20
+
+
+def test_redeem_bad_code_401(client):
+    client.post("/pair/start", json={})
+    assert client.post("/pair/redeem", json={"code": "zzzzzz"}).status_code == 401
+
+
+def test_remote_synth_requires_token(client, tmp_path):
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    r = client.post("/remote/synth", json={"voice_id": "yuki", "text": "こんにちは"})
+    assert r.status_code == 401
+
+
+def test_remote_synth_with_token(client, tmp_path):
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    code = client.post("/pair/start", json={}).json()["code"]
+    token = client.post("/pair/redeem", json={"code": code}).json()["token"]
+
+    r = client.post(
+        "/remote/synth",
+        json={"voice_id": "yuki", "text": "こんにちは"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["ok"] is True
+
+
+def test_remote_synth_bad_token_401(client, tmp_path):
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    r = client.post(
+        "/remote/synth",
+        json={"voice_id": "yuki", "text": "こんにちは"},
+        headers={"Authorization": "Bearer nope"},
+    )
+    assert r.status_code == 401
+
+
+def test_revoke_disables_token(client, tmp_path):
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    code = client.post("/pair/start", json={}).json()["code"]
+    token = client.post("/pair/redeem", json={"code": code}).json()["token"]
+
+    assert client.post("/pair/revoke", json={"token": token}).status_code == 200
+    r = client.post(
+        "/remote/synth",
+        json={"voice_id": "yuki", "text": "こんにちは"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 401
+
+
+def test_revoke_all(client):
+    client.post("/pair/start", json={})
+    client.post("/pair/start", json={})
+    assert client.post("/pair/revoke-all").json()["revoked"] == 2
+    assert client.get("/pair/active").json()["pairings"] == []
+
+
+def test_pairing_is_off_by_default(client):
+    """No pairing started means no remote access — the default must be closed."""
+    assert client.get("/pair/active").json()["pairings"] == []

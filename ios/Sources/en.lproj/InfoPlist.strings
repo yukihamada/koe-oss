@@ -1,0 +1,3 @@
+/* Koe — permission dialogs (English). */
+"NSMicrophoneUsageDescription" = "Your voice is recorded to send voice messages and to register your voice.";
+"NSSpeechRecognitionUsageDescription" = "Turns what you say into text so you can create voice messages hands-free.";
