@@ -13,7 +13,12 @@ from koe_oss.engines.mlx_qwen import MlxQwenEngine
 
 
 class WavEngine(SynthEngine):
-    """Writes a real (silent) wav so ffmpeg concat can consume it."""
+    """Writes a real wav using only the standard library.
+
+    Deliberately avoids numpy/soundfile: CI installs only the package's own
+    dependencies, and a test that needs a GPU stack to assert control flow is
+    a test that will fail for the wrong reason.
+    """
 
     def __init__(self, fail_on=None):
         self.calls = []
@@ -26,8 +31,8 @@ class WavEngine(SynthEngine):
         return True
 
     def synthesize(self, req: SynthRequest) -> SynthResult:
-        import numpy as np
-        import soundfile as sf
+        import struct
+        import wave
         from pathlib import Path
 
         self.calls.append(req)
@@ -35,7 +40,12 @@ class WavEngine(SynthEngine):
             raise RuntimeError("boom")
         p = Path(req.out_path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(str(p), np.zeros(2400, dtype="float32"), 24000)
+        # 0.1 s of silence at 24 kHz, mono, 16-bit.
+        with wave.open(str(p), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(24000)
+            w.writeframes(struct.pack("<2400h", *([0] * 2400)))
         return SynthResult(str(p), 24000, 0.1, "wav", 0.01)
 
 
