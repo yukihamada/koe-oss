@@ -7,9 +7,10 @@ voice** — recorded, stored, and synthesized entirely on your machine.
 
 No account. No API key. After the one-time model download, it works offline.
 
-> **Status: early development.** The core logic, the MLX engine, the CLI and the
-> local HTTP API all work and are tested end-to-end against real audio. The
-> desktop app and cross-platform builds do not exist yet. See
+> **Status: early development.** The core logic, the MLX engine, the CLI, the
+> local HTTP API and a macOS desktop app all work and are tested against real
+> audio. **The app is not signed or notarized**, so it only opens on the machine
+> that built it. Windows and Linux are untested. See
 > [docs/STATUS.md](docs/STATUS.md) for exactly what is verified and what is not.
 
 ## Quickstart (Apple Silicon)
@@ -68,7 +69,7 @@ and it reads what you actually wrote.**
 | MLX / Qwen3-TTS engine (Apple Silicon) | done |
 | CLI (`koe doctor/enroll/say/...`) | done |
 | Local HTTP API (FastAPI) | done |
-| Desktop app (Tauri) | **not implemented** |
+| Desktop app (Tauri, macOS) | done — unsigned |
 | Windows / Linux / NVIDIA | **not implemented** |
 
 ## Measured on Apple M5 Max
@@ -103,3 +104,20 @@ than guessing. Only Japanese has been measured end-to-end.
   MIT). See [docs/LICENSES.md](docs/LICENSES.md).
 
 AGPL permits commercial use. It does not impose revenue sharing.
+
+## Desktop app (macOS, Apple Silicon)
+
+```bash
+python3 -m venv venv && ./venv/bin/pip install -e . && ./venv/bin/pip install mlx-audio
+cargo install tauri-cli --version "^2"
+cd app/src-tauri && cargo tauri build --bundles app
+open target/release/bundle/macos/KOE.app
+```
+
+The app finds a Python that can import `koe_oss`, starts the API on
+`127.0.0.1:8807`, and stops it when the window closes. Override the interpreter
+with `KOE_PYTHON` and the port with `KOE_API_PORT`.
+
+**The build is unsigned and not notarized.** macOS will block it on any machine
+other than the one that built it. Signing requires an Apple Developer
+certificate and is not set up here.

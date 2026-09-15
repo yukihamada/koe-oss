@@ -1,6 +1,6 @@
 # Status — what actually works
 
-Last verified: 2026-09-15, Apple M5 Max (arm64), macOS 26.4.1.
+Last verified: 2026-09-16, Apple M5 Max (arm64), macOS 26.4.1.
 
 Everything below was run on this machine. Nothing is inherited from a
 description of someone else's run.
@@ -14,20 +14,25 @@ description of someone else's run.
 | Reading dictionary changes what is spoken | Reading correction below |
 | Full path works end-to-end with the real engine | `tools/e2e_real_engine.py` → `E2E OK` |
 | CLI works against real audio | `koe say` produced a 3.20 s / 24 kHz wav |
+| Desktop app launches and brings up the API | `KOE.app` started from a clean state served `/health` on 8807 |
+| DMG contains a working app | mounted, `KOE.app/Contents/MacOS/koe-oss` present, 1.6 MB |
+| UI drives real synthesis | `tools/check_ui.py` 8/8 pass |
 | Capability gate refuses instead of substituting | `tests/test_capabilities.py` |
 | Job state machine keeps partial progress on failure | `tests/test_jobs.py` |
 | State survives a restart | `tests/test_store.py`, `tests/test_api.py` |
 
 ## Not implemented
 
-- **Desktop app (Tauri).** No UI. The CLI and HTTP API are the interfaces.
+- **Signed and notarized release.** `KOE.app` and a DMG build locally, but
+  neither is signed or notarized, so macOS will refuse to open them on someone
+  else's machine. This is the main blocker to actually shipping.
 - **Windows and Linux.** Untested. Core logic is platform-independent; the MLX
   engine is Apple-Silicon-only by nature. No non-macOS run has been made.
 - **NVIDIA / CUDA backend.** The fast decoder in the hosted KOE service is
   CUDA-specific and has not been ported here.
 - **Long-form pipeline** (multi-voice, chapters, dubbing). Splitting exists;
   the orchestration on top does not.
-- **Installer, signed build, release artifacts.** None.
+- **Windows / Linux builds.** The Tauri config is macOS-only today.
 - **Streaming synthesis.** Generation is blocking and returns a whole file.
 
 ## Measurements

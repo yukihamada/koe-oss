@@ -42,19 +42,28 @@ fn find_python() -> Option<String> {
             return Some(p);
         }
     }
-    // 2. A venv bundled with the app (or built by scripts/setup-python.sh).
-    //    release/koe-oss -> release -> target -> src-tauri -> app -> repo root
+    // 2. Walk up from the executable looking for a venv that can import the
+    //    package. The depth differs between a bare binary
+    //    (.../app/src-tauri/target/release/koe-oss) and a bundled .app
+    //    (.../KOE.app/Contents/MacOS/koe-oss), so we search every ancestor
+    //    rather than assuming a fixed number of levels.
     let exe = std::env::current_exe().ok()?;
-    let mut root = exe.parent()?.to_path_buf();
-    for _ in 0..5 {
-        if let Some(parent) = root.parent() {
-            root = parent.to_path_buf();
-        }
+    let mut dir = exe.parent()?.to_path_buf();
+    loop {
         for rel in ["venv/bin/python", "venv/bin/python3", ".venv/bin/python3"] {
-            let cand: PathBuf = root.join(rel);
+            let cand: PathBuf = dir.join(rel);
             if cand.exists() && probe(&cand.to_string_lossy()) {
                 return Some(cand.to_string_lossy().to_string());
             }
+        }
+        // Also try the repo root one level up from an `app/` checkout.
+        let cand: PathBuf = dir.join("app").join("venv").join("bin").join("python");
+        if cand.exists() && probe(&cand.to_string_lossy()) {
+            return Some(cand.to_string_lossy().to_string());
+        }
+        match dir.parent() {
+            Some(parent) => dir = parent.to_path_buf(),
+            None => break,
         }
     }
     // 3. Whatever is on PATH.
