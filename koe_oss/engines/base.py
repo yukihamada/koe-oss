@@ -33,6 +33,8 @@ class SynthRequest:
     ref_text: Optional[str] = None
     temperature: float = 0.5
     speed: float = 1.0
+    # Where to write the wav. Required in practice; a temp file is used if unset.
+    out_path: Optional[str] = None
 
 
 @dataclass

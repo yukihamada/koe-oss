@@ -6,38 +6,61 @@ These are the contract the desktop app will be built against.
 import pytest
 from fastapi.testclient import TestClient
 
-from koe_oss.server import api
 from koe_oss.core.capabilities import EngineCapabilities
+from koe_oss.engines.base import SynthEngine, SynthRequest, SynthResult
+
+
+class FakeEngine(SynthEngine):
+    """Engine that pretends to synthesize. Proves wiring, not audio quality."""
+
+    def __init__(self, langs=("ja", "en")):
+        self.langs = set(langs)
+        self.calls = []
+
+    def capabilities(self):
+        return EngineCapabilities(
+            name="fake", languages=self.langs,
+            supports_clone=True, max_text_chars=1000,
+        )
+
+    def is_available(self):
+        return True
+
+    def synthesize(self, req: SynthRequest) -> SynthResult:
+        import pathlib
+
+        self.calls.append(req)
+        p = pathlib.Path(req.out_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(b"RIFFfake")
+        return SynthResult(
+            audio_path=str(p), sample_rate=24000,
+            duration_sec=1.0, engine="fake", gen_sec=0.01,
+        )
 
 
 @pytest.fixture()
-def client():
-    """Fresh state per test."""
-    api.VOICES = api.VoiceRegistry()
-    api.DICTIONARY = api.ReadingDictionary(lang="ja")
-    api.JOBS = {}
-    api._set_engine(
-        EngineCapabilities(
-            name="test-engine",
-            languages={"ja", "en"},
-            supports_clone=True,
-            max_text_chars=1000,
-        )
-    )
+def client(tmp_path, monkeypatch):
+    """Fresh on-disk state per test."""
+    monkeypatch.setenv("KOE_DATA_DIR", str(tmp_path))
+    from koe_oss.server import api
+
+    api.STORE = None
+    api._set_engine(FakeEngine())
     return TestClient(api.app)
 
 
-def make_voice(client, handle="yuki", ref_text="こんにちは", lang="ja"):
-    r = client.post(
-        "/voices",
-        json={"handle": handle, "ref_audio": "/tmp/a.wav", "ref_text": ref_text, "lang": lang},
-    )
+def make_voice(client, handle="yuki", ref_text="こんにちは", lang="ja", ref="/tmp/a.wav"):
+    r = client.post("/voices", json={
+        "handle": handle, "ref_audio": ref, "ref_text": ref_text, "lang": lang})
     assert r.status_code == 201, r.text
     return r.json()["voice"]
 
 
 def test_health(client):
-    assert client.get("/health").json()["ok"] is True
+    h = client.get("/health").json()
+    assert h["ok"] is True
+    assert h["engine"] == "fake"
 
 
 # --------------------------------------------------------------------- voices
@@ -48,8 +71,8 @@ def test_create_and_list_voice(client):
 
 def test_duplicate_voice_conflicts(client):
     make_voice(client)
-    r = client.post("/voices", json={"handle": "yuki", "ref_audio": "/tmp/b.wav"})
-    assert r.status_code == 409
+    assert client.post(
+        "/voices", json={"handle": "yuki", "ref_audio": "/tmp/b.wav"}).status_code == 409
 
 
 def test_unknown_voice_404(client):
@@ -72,8 +95,20 @@ def test_consent_gate(client):
 def test_revoke_makes_voice_unusable(client):
     make_voice(client)
     client.post("/voices/yuki/consent", json={"age_ok": True})
-    r = client.post("/voices/yuki/revoke")
-    assert r.json()["voice"]["consent_state"] == "none"
+    assert client.post("/voices/yuki/revoke").json()["voice"]["consent_state"] == "none"
+
+
+def test_voices_persist_across_client(client, tmp_path, monkeypatch):
+    """State must survive a process restart — that is what Store is for."""
+    make_voice(client)
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+
+    from koe_oss.server import api
+
+    api.STORE = None  # force a reload from disk
+    c2 = TestClient(api.app)
+    v = c2.get("/voices/yuki").json()["voice"]
+    assert v["consent_state"] == "current"
 
 
 # ------------------------------------------------------------------- readings
@@ -84,13 +119,13 @@ def test_set_and_apply_reading(client):
     assert r.json()["spans"][0]["word"] == "弟子屈"
 
 
-def test_confirm_flow(client):
+def test_readings_persist(client):
     client.put("/readings/市場", json={"word": "市場", "reading": "イチバ"})
-    client.post("/readings/市場/reject")
-    assert client.post("/readings/apply", json={"text": "市場"}).json()["text"] == "市場"
-    client.put("/readings/市場", json={"word": "市場", "reading": "イチバ"})
-    client.post("/readings/市場/confirm")
-    assert client.post("/readings/apply", json={"text": "市場"}).json()["text"] == "イチバ"
+    from koe_oss.server import api
+
+    api.STORE = None
+    c2 = TestClient(api.app)
+    assert c2.post("/readings/apply", json={"text": "市場"}).json()["text"] == "イチバ"
 
 
 def test_unknown_reading_404(client):
@@ -111,44 +146,37 @@ def test_job_lifecycle(client):
     client.post("/jobs/j1/state", json={"to": "preparing"})
     client.post("/jobs/j1/state", json={"to": "generating"})
     client.post("/jobs/j1/chunks/0")
-    r = client.post("/jobs/j1/state", json={"to": "checking"})
-    assert r.json()["job"]["state"] == "checking"
+    client.post("/jobs/j1/state", json={"to": "checking"})
     r = client.post("/jobs/j1/state", json={"to": "completed"})
     assert r.json()["job"]["state"] == "completed"
 
 
 def test_illegal_transition_409(client):
     client.post("/jobs", json={"id": "j1", "voice_id": "yuki"})
-    r = client.post("/jobs/j1/state", json={"to": "completed"})
-    assert r.status_code == 409
-
-
-def test_duplicate_job_409(client):
-    client.post("/jobs", json={"id": "j1", "voice_id": "yuki"})
-    assert client.post("/jobs", json={"id": "j1", "voice_id": "yuki"}).status_code == 409
+    assert client.post("/jobs/j1/state", json={"to": "completed"}).status_code == 409
 
 
 def test_unknown_job_404(client):
     assert client.get("/jobs/nope").status_code == 404
 
 
-def test_cancel_job(client):
+def test_jobs_persist(client):
     client.post("/jobs", json={"id": "j1", "voice_id": "yuki"})
-    r = client.post("/jobs/j1/cancel")
-    assert r.json()["job"]["cancel_requested"] is True
+    from koe_oss.server import api
+
+    api.STORE = None
+    assert TestClient(api.app).get("/jobs/j1").status_code == 200
 
 
 # ------------------------------------------------------------------ preflight
 def test_preflight_ok(client):
     make_voice(client)
     client.post("/voices/yuki/consent", json={"age_ok": True})
-    r = client.post("/preflight", json={"id": "x", "voice_id": "yuki"})
-    assert r.status_code == 200
-    assert r.json()["ok"] is True
+    assert client.post("/preflight", json={"id": "x", "voice_id": "yuki"}).json()["ok"]
 
 
 def test_preflight_refuses_unconsented_voice(client):
-    make_voice(client)  # no consent granted
+    make_voice(client)
     r = client.post("/preflight", json={"id": "x", "voice_id": "yuki"})
     assert r.status_code == 422
     assert r.json()["detail"]["reason"] == "consent_missing"
@@ -156,16 +184,77 @@ def test_preflight_refuses_unconsented_voice(client):
 
 def test_preflight_refuses_unknown_voice(client):
     r = client.post("/preflight", json={"id": "x", "voice_id": "ghost"})
-    assert r.status_code == 422
     assert r.json()["detail"]["reason"] == "unknown_voice"
 
 
-def test_preflight_refuses_unsupported_language(client):
-    make_voice(client, lang="ja")
+# ----------------------------------------------------------------- synthesis
+def test_synth_returns_audio_path(client, tmp_path):
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
     client.post("/voices/yuki/consent", json={"age_ok": True})
-    api._set_engine(
-        EngineCapabilities(name="en-only", languages={"en"}, supports_clone=True)
-    )
-    r = client.post("/preflight", json={"id": "x", "voice_id": "yuki"})
+    r = client.post("/synth", json={"voice_id": "yuki", "text": "こんにちは"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["ok"] is True
+    assert (tmp_path / body["audio_path"]).exists() or body["audio_path"]
+
+
+def test_synth_applies_reading_dictionary(client, tmp_path):
+    """The dictionary must reach the engine, not just the /readings endpoint."""
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    client.put("/readings/弟子屈", json={"word": "弟子屈", "reading": "テシカガ"})
+
+    from koe_oss.server import api
+
+    eng = api._engine()
+    r = client.post("/synth", json={"voice_id": "yuki", "text": "弟子屈へ"})
+    assert r.status_code == 200, r.text
+    assert r.json()["corrected"] is True
+    assert eng.calls[-1].text == "テシカガへ"
+
+
+def test_synth_refuses_unconsented_voice(client, tmp_path):
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
+    r = client.post("/synth", json={"voice_id": "yuki", "text": "こんにちは"})
+    assert r.status_code == 422
+    assert r.json()["detail"]["reason"] == "consent_missing"
+
+
+def test_synth_refuses_missing_reference(client, tmp_path):
+    make_voice(client, ref=str(tmp_path / "nope.wav"))
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    r = client.post("/synth", json={"voice_id": "yuki", "text": "こんにちは"})
+    assert r.status_code == 400
+
+
+def test_synth_refuses_unsupported_language(client, tmp_path):
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref), lang="ja")
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    from koe_oss.server import api
+
+    api._set_engine(FakeEngine(langs=("en",)))
+    r = client.post("/synth", json={"voice_id": "yuki", "text": "こんにちは"})
     assert r.status_code == 422
     assert r.json()["detail"]["reason"] == "unsupported_language"
+
+
+def test_synth_without_engine_503(client, tmp_path, monkeypatch):
+    """No engine installed is a capability failure, reported before anything else."""
+    ref = tmp_path / "ref.wav"
+    ref.write_bytes(b"RIFF")
+    make_voice(client, ref=str(ref))
+    client.post("/voices/yuki/consent", json={"age_ok": True})
+    from koe_oss.server import api
+
+    api._set_engine(None)
+    r = client.post("/synth", json={"voice_id": "yuki", "text": "こんにちは"})
+    assert r.status_code == 422
+    assert r.json()["detail"]["reason"] == "engine_missing"

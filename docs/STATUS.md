@@ -2,30 +2,33 @@
 
 Last verified: 2026-09-15, Apple M5 Max (arm64), macOS 26.4.1.
 
-This file exists so nobody has to guess. Everything below was run on this
-machine; nothing here is inherited from a description of someone else's run.
+Everything below was run on this machine. Nothing is inherited from a
+description of someone else's run.
 
 ## Verified working
 
 | Claim | Evidence |
 |---|---|
-| Core logic is correct and deterministic | `92 passed` (`pytest`) |
-| On-device voice cloning produces audio | see Measurements below |
-| Reading dictionary changes what is spoken | see Reading correction below |
-| Capability gate refuses instead of substituting | `tests/test_capabilities.py`, `tests/test_api.py` |
-| Job state machine keeps partial progress on failure | `tests/test_jobs.py::test_partial_progress_survives_failure` |
+| Core logic is correct and deterministic | `114 passed` (`pytest`) |
+| On-device voice cloning produces audio | Measurements below |
+| Reading dictionary changes what is spoken | Reading correction below |
+| Full path works end-to-end with the real engine | `tools/e2e_real_engine.py` → `E2E OK` |
+| CLI works against real audio | `koe say` produced a 3.20 s / 24 kHz wav |
+| Capability gate refuses instead of substituting | `tests/test_capabilities.py` |
+| Job state machine keeps partial progress on failure | `tests/test_jobs.py` |
+| State survives a restart | `tests/test_store.py`, `tests/test_api.py` |
 
 ## Not implemented
 
-- **Desktop app (Tauri).** No UI exists. The HTTP API is the only interface.
-- **Synthesis engine inside `koe_oss`.** `koe_oss/engines/base.py` defines the
-  interface only. The measurements below were produced by scripts in `tools/`
-  that call MLX-Audio directly; they are not wired into the API yet.
-- **Persistence.** Voices, dictionary and jobs live in process memory. A
-  restart clears them.
-- **Installer / signed build / release artifacts.** None.
-- **Windows and Linux.** Untested. The core logic is platform-independent, but
-  no non-macOS run has been made.
+- **Desktop app (Tauri).** No UI. The CLI and HTTP API are the interfaces.
+- **Windows and Linux.** Untested. Core logic is platform-independent; the MLX
+  engine is Apple-Silicon-only by nature. No non-macOS run has been made.
+- **NVIDIA / CUDA backend.** The fast decoder in the hosted KOE service is
+  CUDA-specific and has not been ported here.
+- **Long-form pipeline** (multi-voice, chapters, dubbing). Splitting exists;
+  the orchestration on top does not.
+- **Installer, signed build, release artifacts.** None.
+- **Streaming synthesis.** Generation is blocking and returns a whole file.
 
 ## Measurements
 
@@ -46,10 +49,23 @@ Reference: an 8.26 s, 24 kHz recording of one speaker.
 
 Reproduce: `python tools/measure_local.py`
 
+## End-to-end run
+
+`tools/e2e_real_engine.py` drives the real engine through the HTTP API:
+
+```
+1. voice registered: yuki
+2. consent gate blocks synthesis: ok
+3. synthesized: .../out.wav   duration: 3.52 sec   gen: 1.92 sec
+   corrected: True -> テシカガは北海道にある静かな村です。
+4. ffprobe: sample_rate 24000, channels 1, duration 3.520000
+5. state reloaded from disk: ok
+E2E OK
+```
+
 ## Reading correction — what we actually learned
 
-We transcribed our own output with Whisper (`large-v3-turbo`) to see what the
-model really said.
+We transcribed our own output with Whisper (`large-v3-turbo`).
 
 | input | heard (no dictionary) |
 |---|---|
@@ -58,7 +74,7 @@ model really said.
 | 市場で買い物を… | 市場で買い物を… |
 | 毎月一日に支払います | 毎月**1日**に支払います |
 
-So the misreads are real. Applying the dictionary changed the output:
+Applying the dictionary changed the output:
 
 | rule | heard (with dictionary) |
 |---|---|
@@ -74,14 +90,15 @@ Two honest conclusions:
    normalises kana back to kanji (タキビ → 焚火) and confuses ガ with 川. A
    green/red verdict from this pipeline would be noise.
 
-This is why the design says readings are **proposed**, then **confirmed by a
-human** — not auto-applied on a checker's word. The checker narrows the search;
-it does not close it.
+This is why readings are **proposed**, then **confirmed by a human** — not
+auto-applied on a checker's word. The checker narrows the search; it does not
+close it.
 
 ## Known limitations
 
 - `mlx_audio` emits an unrelated transformers warning on load. Harmless.
-- Only `ja` was measured. Other languages are untested.
+- Only `ja` was measured end-to-end. Other languages are declared but untested.
 - Only the 0.6B model was measured. 1.7B is untested.
 - Whisper transcription of numbers is unreliable (毎月一日 → 毎月1日), so
   number readings are marked unverifiable rather than pass/fail.
+- `/synth` is synchronous. A long script blocks the request.
