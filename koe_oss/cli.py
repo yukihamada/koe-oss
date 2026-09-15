@@ -126,6 +126,42 @@ def cmd_say(args) -> int:
     return 0
 
 
+def cmd_speak_file(args) -> int:
+    """Synthesize a whole text file, resumably."""
+    e = _engine()
+    if e is None:
+        print("no synthesis engine available — run: koe doctor", file=sys.stderr)
+        return 1
+    src = Path(args.file).expanduser()
+    if not src.exists():
+        print(f"not found: {src}", file=sys.stderr)
+        return 1
+    store = Store()
+    reg = store.load_voices()
+    v = reg.get(args.handle)
+    if v is None:
+        print(f"unknown voice: {args.handle}", file=sys.stderr)
+        return 1
+
+    from koe_oss.core.longform import synthesize_longform
+
+    workdir = Path(args.out).expanduser() if args.out else (
+        store.dir / "books" / Path(args.file).stem)
+    text = src.read_text(encoding="utf-8")
+    r = synthesize_longform(
+        e, v, text, workdir,
+        dictionary=store.load_readings(),
+        max_chars=args.max_chars,
+    )
+    print(f"chunks   : {len(r.chunk_paths)} (resumed {r.resumed})")
+    print(f"state    : {r.job.state}")
+    if r.merged_path:
+        print(f"merged   : {r.merged_path}")
+    for err in r.errors:
+        print(f"error    : {err}", file=sys.stderr)
+    return 0 if r.ok else 1
+
+
 def cmd_readings(args) -> int:
     d = Store().load_readings()
     applied = d.applied_entries()
@@ -175,6 +211,13 @@ def main(argv=None) -> int:
     s.add_argument("--lang", default=None)
     s.add_argument("--out", default=None)
     s.set_defaults(fn=cmd_say)
+
+    sf = sub.add_parser("speak-file")
+    sf.add_argument("handle")
+    sf.add_argument("file")
+    sf.add_argument("--out", default=None, help="output directory")
+    sf.add_argument("--max-chars", type=int, default=80)
+    sf.set_defaults(fn=cmd_speak_file)
 
     sub.add_parser("readings").set_defaults(fn=cmd_readings)
 
