@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOE — Your voice. On your device.</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand">KOE</div>
+  <div class="sub" data-i18n="tagline">Your voice. On your device.</div>
+  <div class="spacer"></div>
+  <button id="lang-btn" class="ghost" title="日本語 / English">EN</button>
+</header>
+
+<main>
+  <!-- Status -->
+  <section class="card" id="status-card">
+    <h2 data-i18n="status">環境</h2>
+    <div id="status-body" class="muted" data-i18n="loading">読み込み中…</div>
+  </section>
+
+  <!-- Voices -->
+  <section class="card">
+    <h2 data-i18n="voices">声</h2>
+    <div id="voices" class="list"></div>
+    <details class="fold">
+      <summary data-i18n="registerVoice">声を登録する</summary>
+      <div class="form">
+        <label><span data-i18n="handle">名前</span>
+          <input id="v-handle" placeholder="yuki" autocomplete="off"></label>
+        <label><span data-i18n="refAudio">録音ファイル</span>
+          <input id="v-ref" placeholder="/Users/me/voice.wav"></label>
+        <label><span data-i18n="refText">録音の内容</span>
+          <input id="v-text" placeholder="こんばんは、はまだゆうきです。"></label>
+        <div class="row">
+          <button id="v-add" class="primary" data-i18n="register">登録</button>
+          <span class="hint" data-i18n="consentHint">登録後に同意が必要です</span>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- Speak -->
+  <section class="card">
+    <h2 data-i18n="speak">話す</h2>
+    <label class="stack"><span data-i18n="voice">声</span>
+      <select id="s-voice"></select></label>
+    <label class="stack"><span data-i18n="text">テキスト</span>
+      <textarea id="s-text" rows="4" placeholder="こんにちは、これは私の声です。"></textarea></label>
+    <div class="row">
+      <button id="s-go" class="primary" data-i18n="synthesize">合成</button>
+      <button id="s-stop" class="ghost" data-i18n="cancel" disabled>中止</button>
+      <span id="s-progress" class="muted"></span>
+    </div>
+    <div id="s-result" class="result"></div>
+  </section>
+
+  <!-- Readings -->
+  <section class="card">
+    <h2 data-i18n="readings">読み</h2>
+    <div id="readings" class="list"></div>
+    <div class="form">
+      <div class="row">
+        <input id="r-word" placeholder="弟子屈" autocomplete="off">
+        <input id="r-reading" placeholder="テシカガ" autocomplete="off">
+        <button id="r-add" class="primary" data-i18n="add">追加</button>
+      </div>
+      <div class="hint" data-i18n="readingsHint">登録した語は、合成前に読みへ置き換えられます</div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span data-i18n="localNote">すべて手元の端末で処理されます。音声は外部へ送信されません。</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

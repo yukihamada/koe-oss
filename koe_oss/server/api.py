@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from ..core.capabilities import (
@@ -33,6 +34,21 @@ from ..engines.base import EngineUnavailable, SynthRequest
 
 app = FastAPI(title="KOE OSS", version="0.1.0.dev0")
 
+# The desktop UI is served from a different origin than this API, so the
+# browser needs CORS. Allowed origins are restricted to loopback only — this
+# server is never meant to be reachable from the network.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1", "http://localhost",
+        "http://127.0.0.1:8902", "http://localhost:8902",
+        "tauri://localhost", "http://tauri.localhost",
+    ],
+    allow_origin_regex=r"^https?://(127\.0\.0\.1|localhost)(:\d+)?$",
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 STORE = Store(Path(os.environ["KOE_DATA_DIR"])) if os.environ.get("KOE_DATA_DIR") else None
 _ENGINE = None
 
@@ -53,6 +69,23 @@ def _engine():
 def _set_engine(engine) -> None:
     global _ENGINE
     _ENGINE = engine
+
+
+def autodetect_engine():
+    """Pick the first engine that can actually run here.
+
+    Called on server start so `uvicorn koe_oss.server.api:app` is enough —
+    users should not have to wire the engine by hand.
+    """
+    try:
+        from ..engines.mlx_qwen import MlxQwenEngine
+
+        e = MlxQwenEngine()
+        if e.is_available():
+            return e
+    except ImportError:
+        pass
+    return None
 
 
 def _caps() -> Optional[EngineCapabilities]:
@@ -417,3 +450,29 @@ def synth(body: SynthIn) -> dict:
         # Show the caller when the dictionary changed their text.
         "corrected": spoken != body.text,
     }
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    """Bind the best available engine so /synth works out of the box."""
+    global _ENGINE
+    if _ENGINE is None:
+        _ENGINE = autodetect_engine()
+
+
+@app.get("/audio")
+def get_audio(path: str):
+    """Serve a generated wav from the local data directory.
+
+    The UI cannot use file:// URLs (browsers block them), and generated audio
+    lives inside the data dir. Only files under that dir are served.
+    """
+    from fastapi.responses import FileResponse
+
+    base = _store().dir.resolve()
+    target = Path(path).expanduser().resolve()
+    if base != target and base not in target.parents:
+        raise HTTPException(status_code=403, detail="path outside data directory")
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="audio not found")
+    return FileResponse(str(target), media_type="audio/wav")
