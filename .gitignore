@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+# Never commit voice data, recordings, or generated audio.
+*.wav
+*.mp3
+*.m4a
+*.flac
+voices/
+ref/
+audio/
+cache/
+.env
+*.key
+*.pem

@@ -1,0 +1,23 @@
+[project]
+name = "koe-oss"
+version = "0.1.0.dev0"
+description = "Local-first, open-source toolkit for speaking text in your own voice"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "httpx>=0.27"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["koe_oss", "koe_oss.core", "koe_oss.server", "koe_oss.engines"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
