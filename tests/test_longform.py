@@ -1,7 +1,5 @@
 """Long-form pipeline tests. Uses a fake engine — no GPU needed."""
 
-import subprocess
-
 import pytest
 
 from koe_oss.core.jobs import Job, COMPLETED, FAILED
@@ -131,14 +129,15 @@ def test_manifest_written(voice, tmp_path):
     assert m["lang"] == "ja"
 
 
-def test_merged_audio_is_playable(voice, tmp_path):
+def test_merged_audio_is_valid_wav(voice, tmp_path):
+    """Merged output must be a real wav, checked without external tools."""
+    import wave
+
     r = synthesize_longform(WavEngine(), voice, "一です。二です。三です。", tmp_path)
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "csv=p=0", r.merged_path],
-        capture_output=True, text=True)
-    assert out.returncode == 0, out.stderr
-    assert float(out.stdout.strip()) > 0
+    with wave.open(r.merged_path, "rb") as w:
+        assert w.getnchannels() == 1
+        assert w.getframerate() == 24000
+        assert w.getnframes() == 3 * 2400  # three 0.1s chunks, nothing lost
 
 
 def test_concat_single_file_copies(voice, tmp_path):

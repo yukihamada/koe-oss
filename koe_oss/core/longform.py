@@ -18,7 +18,6 @@ re-encoding and to keep memory flat regardless of script length.
 from __future__ import annotations
 
 import json
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, List, Optional
@@ -50,19 +49,41 @@ def _chunk_path(workdir: Path, index: int) -> Path:
 
 
 def _concat(paths: List[Path], out: Path) -> None:
-    """Join wavs with ffmpeg's concat demuxer. No re-encoding."""
+    """Join wavs without re-encoding.
+
+    Done in Python rather than shelling out to ffmpeg: ffmpeg is not installed
+    everywhere (CI being the obvious case), and concatenating wavs is just
+    writing one header followed by the existing PCM frames. No external
+    process, no transcode, no quality loss.
+    """
     if not paths:
         raise ValueError("nothing to concatenate")
     if len(paths) == 1:
         out.write_bytes(paths[0].read_bytes())
         return
-    lst = out.parent / "concat.txt"
-    lst.write_text("".join(f"file '{p.resolve()}'\n" for p in paths), encoding="utf-8")
-    subprocess.run(
-        ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(lst),
-         "-c", "copy", str(out)],
-        check=True, capture_output=True,
-    )
+
+    import wave
+
+    params = None
+    frames = []
+    for p in paths:
+        with wave.open(str(p), "rb") as w:
+            if params is None:
+                params = w.getparams()
+            elif (
+                w.getframerate() != params.framerate
+                or w.getsampwidth() != params.sampwidth
+                or w.getnchannels() != params.nchannels
+            ):
+                raise ValueError(f"incompatible audio format: {p}")
+            frames.append(w.readframes(w.getnframes()))
+
+    with wave.open(str(out), "wb") as w:
+        w.setnchannels(params.nchannels)
+        w.setsampwidth(params.sampwidth)
+        w.setframerate(params.framerate)
+        for f in frames:
+            w.writeframes(f)
 
 
 def synthesize_longform(
