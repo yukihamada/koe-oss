@@ -21,3 +21,8 @@ cache/
 .env
 *.key
 *.pem
+
+# Rust build artifacts and bundled venv
+app/src-tauri/target/
+venv/
+.venv/

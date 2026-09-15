@@ -4,7 +4,7 @@
  * anywhere in this file — if that ever changes, it should be obvious here.
  */
 
-const API = "http://127.0.0.1:8801";
+const API = "http://127.0.0.1:" + (window.__KOE_PORT__ || 8807);
 
 const I18N = {
   ja: {

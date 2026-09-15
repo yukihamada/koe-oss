@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "KOE",
+  "version": "0.1.0",
+  "identifier": "live.koe.oss",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "KOE",
+        "width": 900,
+        "height": 1000,
+        "minWidth": 640,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:8807 http://localhost:8807; media-src 'self' http://127.0.0.1:8807 http://localhost:8807"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg"],
+    "icon": ["icons/icon.png"]
+  }
+}
