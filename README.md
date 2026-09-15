@@ -70,6 +70,8 @@ and it reads what you actually wrote.**
 | CLI (`koe doctor/enroll/say/...`) | done |
 | Local HTTP API (FastAPI) | done |
 | Desktop app (Tauri, macOS) | done — unsigned |
+| Shared contract with the hosted KOE service | done |
+| LAN pairing (use the Mac voice from iOS) | done |
 | Windows / Linux / NVIDIA | **not implemented** |
 
 ## Measured on Apple M5 Max
@@ -96,6 +98,12 @@ docs/         status, licenses
 The CLI and API are designed for **ja** and **en** from the start. Synthesis
 language support depends on the engine; KOE reports engine capabilities rather
 than guessing. Only Japanese has been measured end-to-end.
+
+## Related
+
+How this fits with the hosted service and the iOS app — shared data contract,
+LAN pairing, and what is deliberately *not* unified:
+[docs/INTEGRATION.md](docs/INTEGRATION.md).
 
 ## License
 
