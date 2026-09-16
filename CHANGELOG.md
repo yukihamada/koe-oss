@@ -97,3 +97,26 @@ rejects paths outside the data dir, same as `/audio`.
 
 Bundling note: mlx-whisper declares torch but never imports it (verified).
 Removing it took the app from 1.2GB to 654MB, and the DMG to 292MB.
+
+### Fixed after a 10-persona review
+
+- **The shipped app could not synthesize.** `scripts/setup-python.sh` only
+  installed mlx-audio behind `KOE_WITH_MLX=1`, which `sign.sh` never set, so
+  the bundled venv had transcription but no TTS. Now installed by default.
+  Verified: `import mlx_audio, soundfile` succeeds in the installed app, and
+  /synth produced a 2.08s wav in 0.6s through the running app.
+- **Revoking consent did not delete the recording.** `core/voices.py` says
+  callers must delete derived data; the API returned the targets and deleted
+  nothing. Worse, `ref_audio` kept the caller's external path, so the recording
+  was never ours to delete. Enrollment now copies it into the data dir, and
+  revoke deletes it. Verified: `removed: ['ref/yuki.wav']`.
+- **Stored XSS in the UI.** Reading rules and audio paths went into innerHTML
+  unescaped. Rebuilt with textContent/createElement.
+- **Focus was invisible** (`outline: none`) and synthesis progress had no
+  aria-live. Fixed both.
+- **The README claimed 弟子屈 → テシカガ.** The measured result was テシカ川 —
+  wrong in a different way. Rewritten to say what actually happens.
+- Removed `tools/find_p12_password.py` and `tools/find_devid_key.sh`:
+  password-guessing scripts with hardcoded personal paths, in a public repo.
+- Added `--version`. Fixed `koe doctor` → `koeoss doctor` in error messages.
+- `docs/STATUS.md` said 114 tests; it is 172.

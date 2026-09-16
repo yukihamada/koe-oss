@@ -1,6 +1,6 @@
 cask "koe-oss" do
   version "0.1.0"
-  sha256 "b81bd6f5e14ae88b15ac3df6ca4eea2120066d32054b3e6f154f01edcf580c45"
+  sha256 "2d827185f21c528e78028741f846f9718e85700f67ec72077045f191325c3038"
 
   url "https://github.com/yukihamada/koe-oss/releases/download/v#{version}/KOE.dmg"
   name "KOE"

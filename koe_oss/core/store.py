@@ -101,6 +101,28 @@ class Store:
     def save_jobs(self, jobs: dict) -> None:
         self._write(JOBS_FILE, {"jobs": {k: v.to_dict() for k, v in jobs.items()}})
 
+    # ---------------------------------------------------------------- import
+    def import_ref_audio(self, handle: str, src: str) -> str:
+        """Copy a reference recording into the data dir, return the new path.
+
+        Storing the caller's path would mean revocation cannot delete the
+        recording, since it would live outside our data dir. So we own a copy.
+        """
+        import shutil
+
+        from ..core.voices import normalize_handle
+
+        h = normalize_handle(handle)
+        source = Path(src).expanduser()
+        if not source.is_file():
+            raise FileNotFoundError(f"no such audio file: {source}")
+
+        ref_dir = self.dir / "ref"
+        ref_dir.mkdir(parents=True, exist_ok=True)
+        dest = ref_dir / f"{h}{source.suffix or '.wav'}"
+        shutil.copy2(source, dest)
+        return str(dest)
+
     # --------------------------------------------------------------- deletion
     def delete_voice_data(self, handle: str) -> list:
         """Remove files belonging to a voice. Returns what was removed."""

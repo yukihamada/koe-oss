@@ -16,6 +16,8 @@ machine, and silently overwriting an existing command would be hostile.
 
 from __future__ import annotations
 
+from koe_oss import __version__
+
 import os
 import sys
 from pathlib import Path
@@ -158,7 +160,7 @@ def cmd_consent(args) -> int:
 def cmd_say(args) -> int:
     e = _engine()
     if e is None:
-        print("no synthesis engine available — run: koe doctor", file=sys.stderr)
+        print("no synthesis engine available — run: koeoss doctor", file=sys.stderr)
         return 1
     store = Store()
     reg = store.load_voices()
@@ -198,7 +200,7 @@ def cmd_speak_file(args) -> int:
     """Synthesize a whole text file, resumably."""
     e = _engine()
     if e is None:
-        print("no synthesis engine available — run: koe doctor", file=sys.stderr)
+        print("no synthesis engine available — run: koeoss doctor", file=sys.stderr)
         return 1
     src = Path(args.file).expanduser()
     if not src.exists():
@@ -300,6 +302,7 @@ def main(argv=None) -> int:
     import argparse
 
     p = argparse.ArgumentParser(prog="koeoss", description="KOE OSS command line")
+    p.add_argument("--version", action="version", version=f"koeoss {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("doctor").set_defaults(fn=cmd_doctor)

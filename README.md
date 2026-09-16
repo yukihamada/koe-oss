@@ -66,7 +66,9 @@ koeoss say yuki "こんにちは、これは私の声です。"
 ```bash
 koeoss set-reading 弟子屈 テシカガ
 koeoss say yuki "弟子屈は北海道にある静かな村です。"
-# → テシカガは北海道にある静かな村です。
+# 辞書はモデルに確実に届きます（出力が変わります）。
+# ただし望み通りの読みになる保証はありません。
+# 実測では「テシカ川」となり、間違い方が変わりました。詳細は docs/STATUS.md。
 ```
 
 ### 3. 長文を合成する（中断しても再開）
@@ -161,8 +163,7 @@ Homebrewのcaskと `scripts/install.sh` は `com.apple.quarantine` を外すこ�
 ## 検証 / Verification
 
 ```
-172 tests          CLI audit 36/36
-iOS contract 26/26 interop: no drift
+172 tests (pytest) ・ CI 8/8 jobs
 CI 8/8 jobs green
 ```
 

@@ -165,10 +165,26 @@ async function refreshReadings() {
   for (const e of rows) {
     const row = document.createElement("div");
     row.className = "item";
-    row.innerHTML = `<span class="name">${e.word}</span>
-      <span class="muted">→</span><span>${e.reading}</span>
-      ${e.state === "proposed" ? `<span class="badge warn">proposed</span>` : ""}
-      <span class="grow"></span>`;
+    // Built with textContent, not innerHTML: e.word and e.reading are
+    // arbitrary user input, and this runs inside the app's webview.
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = e.word;
+    const arrow = document.createElement("span");
+    arrow.className = "muted";
+    arrow.textContent = "→";
+    const reading = document.createElement("span");
+    reading.textContent = e.reading;
+    row.append(name, arrow, reading);
+    if (e.state === "proposed") {
+      const badge = document.createElement("span");
+      badge.className = "badge warn";
+      badge.textContent = "proposed";
+      row.append(badge);
+    }
+    const grow = document.createElement("span");
+    grow.className = "grow";
+    row.append(grow);
     const b = document.createElement("button");
     b.className = "ghost"; b.textContent = "×";
     b.onclick = async () => {
@@ -222,10 +238,17 @@ el("s-go").addEventListener("click", async () => {
     return;
   }
   el("s-progress").textContent = t("done");
-  el("s-result").innerHTML = `
-    <audio controls src="${API}/audio?path=${encodeURIComponent(r.audio_path)}"></audio>
-    <div class="hint">${r.duration_sec}s · ${r.engine}${
-      r.corrected ? " · " + t("readingsHint") : ""}</div>`;
+  const result = el("s-result");
+  result.textContent = "";
+  const audio = document.createElement("audio");
+  audio.controls = true;
+  audio.src = `${API}/audio?path=${encodeURIComponent(r.audio_path)}`;
+  const hint = document.createElement("div");
+  hint.className = "hint";
+  hint.textContent =
+    `${r.duration_sec}s · ${r.engine}` +
+    (r.corrected ? " · " + t("readingsHint") : "");
+  result.append(audio, hint);
 });
 
 el("s-stop").addEventListener("click", async () => {

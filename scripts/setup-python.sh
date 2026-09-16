@@ -54,10 +54,14 @@ echo "installing mlx-whisper"
 # ImportError rather than silently degrading.
 "$VENV/bin/python" -m pip uninstall -y -q torch 2>/dev/null || true
 
-if [ "${KOE_WITH_MLX:-}" = "1" ]; then
-    echo "installing mlx-audio (slow)"
-    "$VENV/bin/python" -m pip install --quiet mlx-audio
-fi
+# Synthesis is the point of the app, so mlx-audio is installed by default.
+# It used to be behind KOE_WITH_MLX=1, which sign.sh never set — the shipped
+# app could transcribe but not speak.
+echo "installing mlx-audio (slow)"
+"$VENV/bin/python" -m pip install --quiet mlx-audio
+
+echo "installing soundfile"
+"$VENV/bin/python" -m pip install --quiet soundfile
 
 "$VENV/bin/python" -c "import koe_oss; print('koe_oss OK:', koe_oss.__file__)"
 echo "venv ready: $VENV"

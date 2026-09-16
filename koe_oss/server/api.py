@@ -209,6 +209,19 @@ def create_voice(body: VoiceIn) -> dict:
     reg = _voices()
     if voice.handle in reg:
         raise HTTPException(status_code=409, detail="voice already exists")
+
+    # Copy the reference recording into the data dir when we can. If we only
+    # stored the caller's path, revoking consent could not delete the
+    # recording — the whole point of revocation — because it would live
+    # somewhere we do not own. A missing file is not fatal at registration
+    # time: the path is kept and synthesis will refuse later.
+    try:
+        voice.ref_audio = _store().import_ref_audio(
+            voice.handle, body.ref_audio
+        )
+    except (FileNotFoundError, OSError, ValueError):
+        pass
+
     reg.add(voice)
     _save_voices(reg)
     return {"voice": voice.to_dict()}
@@ -255,7 +268,15 @@ def revoke_consent(handle: str) -> dict:
     except KeyError:
         raise HTTPException(status_code=404, detail="unknown voice")
     _save_voices(reg)
-    return {"voice": v.to_dict(), "targets": delete_targets(v.handle)}
+    # Revocation that leaves the reference audio on disk is a flag flip, not a
+    # revocation. core/voices.py says callers must delete derived data, so do
+    # it here and report what actually went.
+    removed = _store().delete_voice_data(v.handle)
+    return {
+        "voice": v.to_dict(),
+        "targets": delete_targets(v.handle),
+        "removed": removed,
+    }
 
 
 # --- readings

@@ -93,6 +93,12 @@ cmd_build() {
 
     (cd "$TAURI_DIR" && cargo tauri build --bundles app)
 
+    # cargo tauri build does not copy frontendDist into the bundle when there
+    # is no devServer, so the app launched with no UI at all. Copy it here.
+    RES="$BUNDLE_DIR/macos/$APP_NAME.app/Contents/Resources"
+    mkdir -p "$RES"
+    cp -R "$ROOT/app/ui/." "$RES/"
+
     # cargo tauri build wipes Contents/Resources, so the venv has to be
     # created after it, not before.
     if [ -x "$ROOT/scripts/setup-python.sh" ]; then

@@ -9,11 +9,11 @@ description of someone else's run.
 
 | Claim | Evidence |
 |---|---|
-| Core logic is correct and deterministic | `114 passed` (`pytest`) |
+| Core logic is correct and deterministic | `172 passed` (`pytest`) |
 | On-device voice cloning produces audio | Measurements below |
 | Reading dictionary changes what is spoken | Reading correction below |
 | Full path works end-to-end with the real engine | `tools/e2e_real_engine.py` → `E2E OK` |
-| CLI works against real audio | `koe say` produced a 3.20 s / 24 kHz wav |
+| CLI works against real audio | `koeoss say` produced a 3.20 s / 24 kHz wav |
 | Desktop app launches and brings up the API | `KOE.app` started from a clean state served `/health` on 8807 |
 | DMG contains a working app | mounted, `KOE.app/Contents/MacOS/koe-oss` present, 1.6 MB |
 | UI drives real synthesis | `tools/check_ui.py` 8/8 pass |
