@@ -1,140 +1,176 @@
 # KOE OSS
 
+**あなたの声を、あなたの手元に。**
 **Your voice. On your device.**
 
-KOE OSS is a local-first, open-source toolkit for speaking text in **your own
-voice** — recorded, stored, and synthesized entirely on your machine.
+声のクローンも、文字起こしも、すべてあなたのMacの中で完結します。
+録音はどこにも送信されません。
 
-No account. No API key. After the one-time model download, it works offline.
+Voice cloning and transcription, entirely on your Mac.
+Nothing is uploaded. Nothing leaves the machine.
 
-> **Status: early development.** The core logic, the MLX engine, the CLI, the
-> local HTTP API and a macOS desktop app all work and are tested against real
-> audio. **The app is not signed or notarized**, so it only opens on the machine
-> that built it. Windows and Linux are untested. See
-> [docs/STATUS.md](docs/STATUS.md) for exactly what is verified and what is not.
+<img src="docs/images/ui-main.png" width="700" alt="KOE のデスクトップ画面 / KOE desktop app">
 
-## Quickstart (Apple Silicon)
+---
+
+## これで何ができるか / What it does
+
+| | |
+|---|---|
+| 🎙 **声を登録** | 録音とその書き起こしから、あなたの声を作ります |
+| 🔒 **同意の管理** | 同意するまで合成できません。取り消しもできます |
+| 📖 **読みの修正** | 「弟子屈」を「テシカガ」と読ませる。一度直せば永続します |
+| 📝 **長文の合成** | 途中で止まっても、続きから再開します |
+| 🎧 **文字起こし** | 音声をテキストに。これもオンデバイスです |
+| 📱 **iPhoneから使う** | LAN経由でiPhoneがMacの声を使えます。録音は送信されません |
+
+---
+
+## インストール / Install
+
+### デスクトップアプリ（macOS・Apple Silicon）
 
 ```bash
-pip install -e ".[dev]"
-pip install mlx-audio          # the synthesis engine
-koeoss doctor                  # is this machine ready?
+brew install yukihamada/koe/koe-oss
+open -a /Applications/KOE.app
 ```
 
-Register a voice and speak:
+### CLI
 
 ```bash
-koeoss enroll yuki ~/my-voice.wav --text "what you said in the recording"
-koeoss consent yuki            # required before any synthesis
+git clone https://github.com/yukihamada/koe-oss && cd koe-oss
+pip install -e ".[dev]"
+pip install mlx-audio mlx-whisper
+koeoss doctor
+```
+
+> コマンドは **`koeoss`** です。`koe` は先手（Sente）が既に使っているため、
+> 乗り換える名前にしませんでした。
+
+---
+
+## 使い方 / Usage
+
+### 1. 声を登録して話させる
+
+```bash
+koeoss enroll yuki ~/my-voice.wav --text "録音で話した内容"
+koeoss consent yuki
 koeoss say yuki "こんにちは、これは私の声です。"
 ```
 
-Fix a misread once, permanently:
+同意するまで合成できません。これは仕様です。
+
+### 2. 読みを直す（一度で永続）
 
 ```bash
 koeoss set-reading 弟子屈 テシカガ
 koeoss say yuki "弟子屈は北海道にある静かな村です。"
-# -> speaks テシカガは北海道にある静かな村です。
+# → テシカガは北海道にある静かな村です。
 ```
 
-Synthesize a whole file, resumably:
+### 3. 長文を合成する（中断しても再開）
 
 ```bash
 koeoss speak-file yuki book.txt --out ./book
 ```
 
-Or run the local API (binds to 127.0.0.1 only):
+### 4. 文字起こし
 
 ```bash
-koeoss serve                   # or: uvicorn koe_oss.server.api:app
+koeoss transcribe recording.wav
+# こんばんは濱田裕樹です。今日は録音ボタンを押して収録しています。
+
+koeoss transcribe recording.wav --json
+# {"text": "...", "language": "ja", "seconds": 3.69}
 ```
 
-> The command is **`koeoss`**, not `koe`. `koe` is already used by Sente on this
-> machine, and overwriting an existing command would be hostile.
+### 5. APIとして使う（127.0.0.1 のみ）
 
-## Why this exists
+```bash
+koeoss serve
+```
 
-Most voice-cloning tools optimize for breadth: hundreds of languages, dozens of
-engines. KOE OSS optimizes for something narrower — **your voice stays yours,
-and it reads what you actually wrote.**
+```bash
+curl -X POST http://127.0.0.1:8807/transcribe \
+  -H 'Content-Type: application/json' \
+  -d '{"path": "recording.wav"}'
+```
 
-1. **Local by default.** Recordings, scripts, dictionary and generated audio
-   live on your device.
-2. **Correctable readings.** When a word is misread you fix it once and it
-   stays fixed. Corrections are explicit and reviewable, never silent.
-3. **Honest failures.** If a voice or language is unsupported, KOE says so. It
-   never silently substitutes a different voice.
+外へは開きません。`/audio` と `/transcribe` はデータディレクトリの外にある
+ファイルを拒否します。
 
-## What works today
+---
 
-| Area | State |
+## 実測値 / Measured
+
+Apple M5 Max で計測しました。
+
+| | |
 |---|---|
-| Reading dictionary (overrides + audit trail) | done |
-| Script splitting (deterministic, resumable) | done |
-| Voice registry + versioned consent, revocation | done |
-| Job lifecycle with partial progress on failure | done |
-| Capability gating (refuse, never substitute) | done |
-| JSON persistence (atomic writes) | done |
-| MLX / Qwen3-TTS engine (Apple Silicon) | done |
-| CLI (`koe doctor/enroll/say/...`) | done |
-| Local HTTP API (FastAPI) | done |
-| Desktop app (Tauri, macOS) | done — unsigned |
-| Shared contract with the hosted KOE service | done |
-| LAN pairing (use the Mac voice from iOS) | done |
-| Windows / Linux / NVIDIA | **not implemented** |
+| 音声合成モデル | `mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16` |
+| モデル読み込み | 18.97 秒 |
+| ピークメモリ | 6.6 GB |
+| リアルタイム係数 | 短い文で 約0.26 |
+| 文字起こしモデル | `mlx-community/whisper-large-v3-turbo` |
+| 文字起こし | 8.26秒の音声を 3.6秒 |
 
-## Measured on Apple M5 Max
+---
 
-Model load 18.97 s · peak memory 6.6 GB · realtime factor ~0.26 on short
-sentences. Full numbers and the commands that produced them are in
-[docs/STATUS.md](docs/STATUS.md).
+## 設計の方針 / Design
 
-## Repository layout
+- **同意が先。** 声は本人のものです。同意記録がなければ合成しません。
+- **できないことは、できないと言う。** 非対応の言語を、こっそり別の声に
+  差し替えることはしません。理由を返して拒否します。
+- **読みは提案し、人間が確定する。** 自動で書き換えて「直った」ことに
+  しません。
+- **録音は外に出ない。** ネットワーク越しの合成も、LAN内のペアリングまで。
 
-```
-koe_oss/
-  core/       pure logic — no network, no GPU, fully unit-tested
-  server/     local HTTP API (FastAPI)
-  engines/    synthesis backends (MLX/Qwen3-TTS today)
-  cli.py      command line interface
-tools/        measurement and verification scripts
-tests/        pytest suite (114 tests)
-docs/         status, licenses
-```
+---
 
-## Language support
+## ⚠️ 署名について / Signing
 
-The CLI and API are designed for **ja** and **en** from the start. Synthesis
-language support depends on the engine; KOE reports engine capabilities rather
-than guessing. Only Japanese has been measured end-to-end.
+配布しているアプリは**未署名**です。Developer ID証明書が手元にないため、
+Gatekeeperが起動をブロックします。
 
-## Related
+Homebrewのcaskと `scripts/install.sh` は `com.apple.quarantine` を外すことで
+これを回避します（ブロックの正体は署名ではなくこの属性です）。
 
-How this fits with the hosted service and the iOS app — shared data contract,
-LAN pairing, and what is deliberately *not* unified:
-[docs/INTEGRATION.md](docs/INTEGRATION.md).
-
-## License
-
-- This repository: **AGPL-3.0** (see [LICENSE](LICENSE)).
-- Upstream models keep their own licenses (Qwen3-TTS: Apache-2.0, MLX-Audio:
-  MIT). See [docs/LICENSES.md](docs/LICENSES.md).
-
-AGPL permits commercial use. It does not impose revenue sharing.
-
-## Desktop app (macOS, Apple Silicon)
+正しく配布するには：
 
 ```bash
-python3 -m venv venv && ./venv/bin/pip install -e . && ./venv/bin/pip install mlx-audio
-cargo install tauri-cli --version "^2"
-cd app/src-tauri && cargo tauri build --bundles app
-open target/release/bundle/macos/KOE.app
+./scripts/sign.sh check   # 今の環境で何ができるか
+./scripts/sign.sh sign    # 署名＋公証（Developer IDが必要）
 ```
 
-The app finds a Python that can import `koe_oss`, starts the API on
-`127.0.0.1:8807`, and stops it when the window closes. Override the interpreter
-with `KOE_PYTHON` and the port with `KOE_API_PORT`.
+証明書はAppleアカウントに存在しますが、秘密鍵がこのMacにありません。
+新規作成には Account Holder 権限が必要です。
 
-**The build is unsigned and not notarized.** macOS will block it on any machine
-other than the one that built it. Signing requires an Apple Developer
-certificate and is not set up here.
+---
+
+## 制約 / Limitations
+
+- アプリが未署名（上記参照）
+- Apple Silicon のみ。Intel Mac・Windows・Linuxは未検証
+- 日本語のみ end-to-end で検証済み
+- 音声合成は0.6Bモデルのみ計測
+- 合成は同期処理。長い文はリクエストをブロックします
+
+---
+
+## 検証 / Verification
+
+```
+172 tests          CLI audit 36/36
+iOS contract 26/26 interop: no drift
+CI 8/8 jobs green
+```
+
+---
+
+## ライセンス / License
+
+AGPL-3.0. See [LICENSE](LICENSE).
+
+音声のクローンを本人の同意なしに行わないでください。
+Do not clone a voice without its owner's consent.
