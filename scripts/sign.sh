@@ -93,6 +93,12 @@ cmd_build() {
 
     (cd "$TAURI_DIR" && cargo tauri build --bundles app)
 
+    # cargo tauri build wipes Contents/Resources, so the venv has to be
+    # created after it, not before.
+    if [ -x "$ROOT/scripts/setup-python.sh" ]; then
+        "$ROOT/scripts/setup-python.sh" || log "warning: python venv not created"
+    fi
+
     mkdir -p "$DIST"
     rm -f "$DIST/$APP_NAME.dmg"
     hdiutil create -volname "$APP_NAME" \

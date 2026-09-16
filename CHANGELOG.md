@@ -65,3 +65,21 @@ attribute. Verified: the app launches and serves /health.
 
 This is a workaround, not a fix. Proper distribution still needs a Developer
 ID certificate and `scripts/sign.sh sign`.
+
+### Fixed: the app could not start after a clean install
+
+The bundled app reported "no python with koe_oss found" even with a venv
+inside it. Two separate causes:
+
+1. `cargo tauri build` wipes Contents/Resources, so the venv created before
+   the build was gone by the time the DMG was made. `scripts/sign.sh build`
+   now runs `scripts/setup-python.sh` after the build, not before.
+2. `find_python()` only looked for `<ancestor>/venv/bin/python`. A bundled .app
+   keeps resources in Contents/Resources, so a venv there was never found.
+   It now also checks `Resources/venv/bin/python`.
+
+Also: the error message pointed at `scripts/setup-python.sh`, which did not
+exist. It does now, and it has a `--check` mode.
+
+Verified: uninstall, `brew install yukihamada/koe/koe-oss`, launch, /health
+answers on 8807 with data_dir ~/.local/share/koe-oss.

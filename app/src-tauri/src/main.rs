@@ -50,7 +50,16 @@ fn find_python() -> Option<String> {
     let exe = std::env::current_exe().ok()?;
     let mut dir = exe.parent()?.to_path_buf();
     loop {
-        for rel in ["venv/bin/python", "venv/bin/python3", ".venv/bin/python3"] {
+        // A bundled .app keeps resources in Contents/Resources, not next to
+        // the binary, so look there too — otherwise a bundled venv is never
+        // found and the app reports "no python with koe_oss found".
+        for rel in [
+            "venv/bin/python",
+            "venv/bin/python3",
+            ".venv/bin/python3",
+            "Resources/venv/bin/python",
+            "Resources/venv/bin/python3",
+        ] {
             let cand: PathBuf = dir.join(rel);
             if cand.exists() && probe(&cand.to_string_lossy()) {
                 return Some(cand.to_string_lossy().to_string());
