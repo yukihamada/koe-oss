@@ -266,6 +266,36 @@ def cmd_set_reading(args) -> int:
     return 0
 
 
+def cmd_transcribe(args) -> int:
+    from koe_oss.engines.mlx_whisper_engine import (
+        TranscriptionUnavailable,
+        transcribe,
+    )
+
+    try:
+        result = transcribe(args.audio, model=args.model, language=args.lang)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    except TranscriptionUnavailable as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        import json
+
+        print(json.dumps({
+            "text": result.text,
+            "language": result.language,
+            "seconds": result.seconds,
+            "model": result.model,
+        }, ensure_ascii=False))
+        return 0
+
+    print(result.text)
+    return 0
+
+
 def main(argv=None) -> int:
     import argparse
 
@@ -311,6 +341,13 @@ def main(argv=None) -> int:
     r.add_argument("word")
     r.add_argument("reading")
     r.set_defaults(fn=cmd_set_reading)
+
+    t = sub.add_parser("transcribe", help="speech-to-text from an audio file")
+    t.add_argument("audio")
+    t.add_argument("--model", default="mlx-community/whisper-large-v3-turbo")
+    t.add_argument("--lang", default=None, help="force a language code")
+    t.add_argument("--json", action="store_true", help="emit JSON")
+    t.set_defaults(fn=cmd_transcribe)
 
     args = p.parse_args(argv)
     return args.fn(args)

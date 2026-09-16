@@ -96,7 +96,9 @@ cmd_build() {
     # cargo tauri build wipes Contents/Resources, so the venv has to be
     # created after it, not before.
     if [ -x "$ROOT/scripts/setup-python.sh" ]; then
-        "$ROOT/scripts/setup-python.sh" || log "warning: python venv not created"
+        if ! "$ROOT/scripts/setup-python.sh" 2>&1 | grep -v "WARNING: Cache"; then
+            log "warning: python venv not created"
+        fi
     fi
 
     mkdir -p "$DIST"

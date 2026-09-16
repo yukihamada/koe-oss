@@ -398,6 +398,47 @@ def preflight(body: JobIn) -> dict:
     return {"ok": True, "lang": lang}
 
 
+# --- transcription
+class TranscribeIn(BaseModel):
+    path: str
+    model: str = "mlx-community/whisper-large-v3-turbo"
+    lang: str | None = None
+
+
+@app.post("/transcribe")
+def transcribe(body: TranscribeIn) -> dict:
+    """Transcribe an audio file to text.
+
+    Kept separate from /synth on purpose: transcription involves no voice, no
+    enrolment and no consent, so it has no business in that lifecycle.
+    """
+    from fastapi import HTTPException
+
+    base = _store().dir.resolve()
+    target = Path(body.path).expanduser().resolve()
+    if base != target and base not in target.parents:
+        raise HTTPException(status_code=403, detail="path outside data directory")
+
+    from koe_oss.engines.mlx_whisper_engine import (
+        TranscriptionUnavailable,
+        transcribe as run_transcribe,
+    )
+
+    try:
+        r = run_transcribe(target, model=body.model, language=body.lang)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="audio file not found")
+    except TranscriptionUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    return {
+        "text": r.text,
+        "language": r.language,
+        "seconds": r.seconds,
+        "model": r.model,
+    }
+
+
 # --- synthesis
 @app.post("/synth")
 def synth(body: SynthIn) -> dict:

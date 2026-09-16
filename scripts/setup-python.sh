@@ -43,6 +43,17 @@ rm -rf "$VENV"
 "$VENV/bin/python" -m pip install --upgrade pip --quiet
 "$VENV/bin/python" -m pip install --quiet "$ROOT"
 
+# Transcription (mlx-whisper) is installed by default: it is small next to the
+# TTS stack and the app advertises speech-to-text.
+echo "installing mlx-whisper"
+"$VENV/bin/python" -m pip install --quiet mlx-whisper
+
+# mlx-whisper declares torch but never imports it (verified: 'torch' not in
+# sys.modules after import). It is 583MB of the bundle for nothing, so remove
+# it. If a future version imports it, transcription will fail loudly with an
+# ImportError rather than silently degrading.
+"$VENV/bin/python" -m pip uninstall -y -q torch 2>/dev/null || true
+
 if [ "${KOE_WITH_MLX:-}" = "1" ]; then
     echo "installing mlx-audio (slow)"
     "$VENV/bin/python" -m pip install --quiet mlx-audio

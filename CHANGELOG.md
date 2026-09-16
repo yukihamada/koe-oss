@@ -83,3 +83,17 @@ exist. It does now, and it has a `--check` mode.
 
 Verified: uninstall, `brew install yukihamada/koe/koe-oss`, launch, /health
 answers on 8807 with data_dir ~/.local/share/koe-oss.
+
+### Added: speech-to-text
+
+`koeoss transcribe <audio>` and `POST /transcribe`, both on-device via
+mlx-whisper (whisper-large-v3-turbo).
+
+Measured on ref_yuki.wav (8.26s): 3.6s, "こんばんは濱田裕樹です。今日は録音ボタンを押して収録しています。"
+
+Kept separate from synthesis on purpose — transcription has no voice, no
+enrolment and no consent, so it does not belong in that lifecycle. `/transcribe`
+rejects paths outside the data dir, same as `/audio`.
+
+Bundling note: mlx-whisper declares torch but never imports it (verified).
+Removing it took the app from 1.2GB to 654MB, and the DMG to 292MB.
