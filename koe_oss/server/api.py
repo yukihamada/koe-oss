@@ -34,7 +34,7 @@ from ..core.voices import (
 )
 from ..engines.base import EngineUnavailable, SynthRequest
 
-app = FastAPI(title="KOE OSS", version="0.1.0.dev0")
+app = FastAPI(title="KOE OSS", version="0.1.0")
 
 # The desktop UI is served from a different origin than this API, so the
 # browser needs CORS. Allowed origins are restricted to loopback only — this

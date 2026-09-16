@@ -18,30 +18,39 @@ No account. No API key. After the one-time model download, it works offline.
 ```bash
 pip install -e ".[dev]"
 pip install mlx-audio          # the synthesis engine
-koe doctor                     # is this machine ready?
+koeoss doctor                  # is this machine ready?
 ```
 
 Register a voice and speak:
 
 ```bash
-koe enroll yuki ~/my-voice.wav --text "what you said in the recording"
-koe consent yuki               # required before any synthesis
-koe say yuki "こんにちは、これは私の声です。"
+koeoss enroll yuki ~/my-voice.wav --text "what you said in the recording"
+koeoss consent yuki            # required before any synthesis
+koeoss say yuki "こんにちは、これは私の声です。"
 ```
 
 Fix a misread once, permanently:
 
 ```bash
-koe set-reading 弟子屈 テシカガ
-koe say yuki "弟子屈は北海道にある静かな村です。"
+koeoss set-reading 弟子屈 テシカガ
+koeoss say yuki "弟子屈は北海道にある静かな村です。"
 # -> speaks テシカガは北海道にある静かな村です。
+```
+
+Synthesize a whole file, resumably:
+
+```bash
+koeoss speak-file yuki book.txt --out ./book
 ```
 
 Or run the local API (binds to 127.0.0.1 only):
 
 ```bash
-uvicorn koe_oss.server.api:app --port 8787
+koeoss serve                   # or: uvicorn koe_oss.server.api:app
 ```
+
+> The command is **`koeoss`**, not `koe`. `koe` is already used by Sente on this
+> machine, and overwriting an existing command would be hostile.
 
 ## Why this exists
 

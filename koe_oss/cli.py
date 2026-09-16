@@ -1,17 +1,81 @@
 """Command line interface.
 
-    koe doctor                     is this machine able to run KOE?
-    koe voices                     list registered voices
-    koe enroll <handle> <wav>      register a voice from a recording
-    koe say <handle> <text>        synthesize text to a wav
-    koe readings                   list reading rules
-    koe set-reading <word> <kana>  add a reading rule
+    koeoss doctor                     is this machine able to run KOE?
+    koeoss voices                     list registered voices
+    koeoss enroll <handle> <wav>      register a voice from a recording
+    koeoss consent <handle>           grant consent (required before synthesis)
+    koeoss say <handle> <text>        synthesize text to a wav
+    koeoss speak-file <handle> <file> synthesize a whole file, resumably
+    koeoss readings                   list reading rules
+    koeoss set-reading <word> <kana>  add a reading rule
+    koeoss serve                      run the local API
+
+The command is `koeoss`, not `koe`: `koe` is already taken by Sente on this
+machine, and silently overwriting an existing command would be hostile.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+
+# Set before any model library is imported: without this, huggingface_hub
+# writes progress bars and transformers writes load warnings straight to the
+# terminal, which makes the CLI output unusable in scripts and pipes.
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BAR", "1")
+os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
+# huggingface_hub writes download progress bars to stderr. HF_HUB_DISABLE_
+# PROGRESS_BAR is not honoured by every version (1.31 ignores it), and there is
+# no public API to turn them off, so we filter them at the stream level while
+# a model is loading. User-facing output goes to stdout and is untouched.
+class _Quiet:
+    """Suppress library noise while a model loads.
+
+    Model libraries print progress bars and load notices to both stdout and
+    stderr, which makes `koeoss say` unusable in a pipe. We wrap both streams
+    during synthesis only; our own output is printed outside that window.
+    """
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+    _NOISE = (
+        "it/s]", "s/it]", "B/s]", "\r",
+        "Initialized encoder codebooks",
+        "Loaded speech tokenizer from",
+        "You are using a model of type",
+        "clean_up_tokenization_spaces",
+    )
+
+    def write(self, s):
+        if any(n in s for n in self._NOISE):
+            return len(s)
+        # Swallowing noise leaves behind the blank lines it would have printed.
+        if s.strip() == "":
+            return len(s)
+        return self._stream.write(s)
+
+    def flush(self):
+        return self._stream.flush()
+
+
+def _quiet(on: bool) -> None:
+    if on:
+        if not isinstance(sys.stderr, _Quiet):
+            sys.stderr = _Quiet(sys.stderr)
+        if not isinstance(sys.stdout, _Quiet):
+            sys.stdout = _Quiet(sys.stdout)
+    else:
+        if isinstance(sys.stderr, _Quiet):
+            sys.stderr = sys.stderr._stream
+        if isinstance(sys.stdout, _Quiet):
+            sys.stdout = sys.stdout._stream
 
 from koe_oss.core.store import Store
 from koe_oss.core.voices import Voice, normalize_handle
@@ -74,7 +138,7 @@ def cmd_enroll(args) -> int:
     store.save_voices(reg)
     print(f"registered {handle}")
     print("grant consent before synthesizing:")
-    print(f"  koe consent {handle}")
+    print(f"  koeoss consent {handle}")
     return 0
 
 
@@ -119,9 +183,13 @@ def cmd_say(args) -> int:
     from koe_oss.engines.base import SynthRequest
 
     print(f"speaking ({lang}): {spoken}")
-    result = e.synthesize(SynthRequest(
-        text=spoken, lang=lang, ref_audio=v.ref_audio,
-        ref_text=v.ref_text, out_path=str(out)))
+    _quiet(True)
+    try:
+        result = e.synthesize(SynthRequest(
+            text=spoken, lang=lang, ref_audio=v.ref_audio,
+            ref_text=v.ref_text, out_path=str(out)))
+    finally:
+        _quiet(False)
     print(f"wrote {result.audio_path}  {result.duration_sec:.2f}s  ({result.gen_sec:.2f}s)")
     return 0
 
@@ -162,6 +230,19 @@ def cmd_speak_file(args) -> int:
     return 0 if r.ok else 1
 
 
+def cmd_serve(args) -> int:
+    """Run the local API. Binds to loopback only."""
+    import uvicorn
+
+    uvicorn.run(
+        "koe_oss.server.api:app",
+        host="127.0.0.1",
+        port=args.port,
+        log_level=args.log_level,
+    )
+    return 0
+
+
 def cmd_readings(args) -> int:
     d = Store().load_readings()
     applied = d.applied_entries()
@@ -188,7 +269,7 @@ def cmd_set_reading(args) -> int:
 def main(argv=None) -> int:
     import argparse
 
-    p = argparse.ArgumentParser(prog="koe", description="KOE OSS command line")
+    p = argparse.ArgumentParser(prog="koeoss", description="KOE OSS command line")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("doctor").set_defaults(fn=cmd_doctor)
@@ -218,6 +299,11 @@ def main(argv=None) -> int:
     sf.add_argument("--out", default=None, help="output directory")
     sf.add_argument("--max-chars", type=int, default=80)
     sf.set_defaults(fn=cmd_speak_file)
+
+    sv = sub.add_parser("serve")
+    sv.add_argument("--port", type=int, default=8807)
+    sv.add_argument("--log-level", default="info")
+    sv.set_defaults(fn=cmd_serve)
 
     sub.add_parser("readings").set_defaults(fn=cmd_readings)
 
