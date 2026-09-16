@@ -41,21 +41,6 @@ jobs:
       - name: iOS sync drift (skipped without upstream checkout)
         run: python tools/sync_ios.py check
 
-  cli:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
-      # No GPU / no model on CI runners, so skip the synthesis steps.
-      - name: CLI audit
-        run: python tools/audit_cli.py --no-synth
-
   cli-audit:
     runs-on: macos-latest
     steps:
