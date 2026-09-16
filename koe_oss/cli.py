@@ -233,12 +233,25 @@ def cmd_speak_file(args) -> int:
 
 
 def cmd_serve(args) -> int:
-    """Run the local API. Binds to loopback only."""
+    """Run the API. Binds to loopback unless --lan is given.
+
+    --lan is opt-in on purpose: it exposes the local voice to the network, so
+    it must be asked for, and it is the only way pairing can be reached.
+    """
     import uvicorn
+
+    host = "0.0.0.0" if args.lan else "127.0.0.1"
+    if args.lan:
+        print(
+            f"binding to {host}:{args.port} — this voice is reachable from "
+            "your network. Pairing is enabled. Use --lan only on a network "
+            "you trust.",
+            file=sys.stderr,
+        )
 
     uvicorn.run(
         "koe_oss.server.api:app",
-        host="127.0.0.1",
+        host=host,
         port=args.port,
         log_level=args.log_level,
     )
@@ -336,6 +349,11 @@ def main(argv=None) -> int:
     sv = sub.add_parser("serve")
     sv.add_argument("--port", type=int, default=8807)
     sv.add_argument("--log-level", default="info")
+    sv.add_argument(
+        "--lan",
+        action="store_true",
+        help="bind to all interfaces so paired devices can reach this voice",
+    )
     sv.set_defaults(fn=cmd_serve)
 
     sub.add_parser("readings").set_defaults(fn=cmd_readings)

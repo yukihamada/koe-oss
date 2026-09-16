@@ -2,25 +2,49 @@
 name = "koe-oss"
 version = "0.1.0"
 description = "Local-first, open-source toolkit for speaking text in your own voice"
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "Yuki Hamada", email = "mail@yukihamada.jp" }]
+keywords = ["tts", "speech-synthesis", "voice-cloning", "whisper", "local-first"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
 dependencies = [
     "fastapi>=0.115",
     "uvicorn>=0.30",
     "pydantic>=2.7",
 ]
 
+[project.urls]
+Homepage = "https://github.com/yukihamada/koe-oss"
+Repository = "https://github.com/yukihamada/koe-oss"
+Changelog = "https://github.com/yukihamada/koe-oss/blob/main/CHANGELOG.md"
+Issues = "https://github.com/yukihamada/koe-oss/issues"
+
 [project.scripts]
 koeoss = "koe_oss.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "httpx>=0.27"]
+# Synthesis and transcription. Apple Silicon only, and large, so they are
+# opt-in rather than forced on every install.
+apple = [
+    "mlx-audio; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mlx-whisper; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["koe_oss", "koe_oss.core", "koe_oss.server", "koe_oss.engines"]
+[tool.setuptools.packages.find]
+include = ["koe_oss*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

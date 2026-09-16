@@ -12,6 +12,19 @@ network, you must offer them your source under the same terms.
 AGPL does **not** require revenue sharing. A hosted service built around this
 code is a separate commercial decision, not a license obligation.
 
+## Vendored iOS client
+
+`ios/` is a vendored copy of the KOE iOS client, kept in sync by
+`tools/sync_ios.py` (a hash manifest; drift fails the build).
+
+The upstream checkout carried no LICENSE file. These files are therefore
+published here under the same AGPL-3.0 as the rest of this repository, by the
+copyright holder. If you are the author of any of this code and disagree,
+open an issue and it will be removed.
+
+Note that `ios/Sources/Secrets.swift` is deliberately never vendored — see
+`ios/Sources/Secrets.template.swift`.
+
 ## Upstream components
 
 | Component | License | Notes |

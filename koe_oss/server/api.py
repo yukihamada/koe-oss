@@ -488,6 +488,17 @@ def synth(body: SynthIn) -> dict:
 
     spoken = _readings().apply(body.text)
     out = body.out_path or str(_store().dir / "audio" / voice.handle / "out.wav")
+
+    # /audio and /transcribe already refuse paths outside the data dir. Without
+    # the same check here, an unauthenticated caller could write a wav
+    # anywhere the process can reach.
+    base = _store().dir.resolve()
+    target = Path(out).expanduser().resolve()
+    if base != target and base not in target.parents:
+        raise HTTPException(
+            status_code=403, detail="out_path outside data directory"
+        )
+    out = str(target)
     try:
         result = engine.synthesize(
             SynthRequest(

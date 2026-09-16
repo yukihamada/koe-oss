@@ -120,3 +120,31 @@ Removing it took the app from 1.2GB to 654MB, and the DMG to 292MB.
   password-guessing scripts with hardcoded personal paths, in a public repo.
 - Added `--version`. Fixed `koe doctor` → `koeoss doctor` in error messages.
 - `docs/STATUS.md` said 114 tests; it is 172.
+
+### Completed the remaining review findings
+
+- **brew install now works for everyone.** The tap was never pushed, so the
+  README's install command only worked on this machine. Pushed to
+  github.com/yukihamada/homebrew-koe. Verified by untapping, re-tapping from
+  the remote, and installing clean.
+- **LAN access is real now.** `core/pairing.py` existed and the README
+  advertised iPhone access, but nothing ever bound outside loopback, so the
+  feature was unreachable. Added `koeoss serve --lan`, opt-in, which prints a
+  warning. Documented a threat model with no implementation behind it is worse
+  than not documenting it.
+- **`/synth` accepted an arbitrary `out_path`.** `/audio` and `/transcribe`
+  restricted paths but synthesis did not, so an unauthenticated caller could
+  write a wav anywhere. Now checked the same way. Verified: 403.
+- **Pairing codes were not spent.** The docstring said "one code, one token,
+  then it is spent"; the implementation returned the same pairing forever until
+  it expired. Now cleared on redeem. Verified: second redeem returns None.
+- **iOS provenance was undocumented.** 41 vendored Swift files with no license
+  statement. The upstream had none, so LICENSES.md now states they are
+  published here under AGPL-3.0 by the copyright holder, with a removal path.
+- Added SECURITY.md (threat model, reporting address) and
+  CODE_OF_CONDUCT.md, the latter including a clause specific to voice cloning.
+- Added ROADMAP.md stating what is blocked and by what, rather than a list of
+  wishes.
+- pyproject.toml had no license, authors, urls, classifiers, keywords or
+  readme — it could not have been published to PyPI as-is. Added, plus an
+  `apple` extra so `pip install "koe-oss[apple]"` is one command.

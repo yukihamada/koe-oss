@@ -22,7 +22,7 @@ Nothing is uploaded. Nothing leaves the machine.
 | 📖 **読みの修正** | 「弟子屈」を「テシカガ」と読ませる。一度直せば永続します |
 | 📝 **長文の合成** | 途中で止まっても、続きから再開します |
 | 🎧 **文字起こし** | 音声をテキストに。これもオンデバイスです |
-| 📱 **iPhoneから使う** | LAN経由でiPhoneがMacの声を使えます。録音は送信されません |
+| 📱 **iPhoneから使う** | `koeoss serve --lan` でiPhoneがMacの声を使えます（オプトイン） |
 
 ---
 
@@ -99,8 +99,10 @@ curl -X POST http://127.0.0.1:8807/transcribe \
   -d '{"path": "recording.wav"}'
 ```
 
-外へは開きません。`/audio` と `/transcribe` はデータディレクトリの外にある
-ファイルを拒否します。
+既定では `127.0.0.1` のみ。`/audio`、`/transcribe`、`/synth` は
+データディレクトリの外にあるパスを拒否します。
+
+`--lan` を付けたときだけ全インターフェースに開きます（iPhone連携用）。
 
 ---
 
@@ -149,6 +151,10 @@ Homebrewのcaskと `scripts/install.sh` は `com.apple.quarantine` を外すこ�
 新規作成には Account Holder 権限が必要です。
 
 ---
+
+## ロードマップ / Roadmap
+
+[ROADMAP.md](ROADMAP.md) に、何がブロックされていて、何で解消するかを書いています。
 
 ## 制約 / Limitations
 

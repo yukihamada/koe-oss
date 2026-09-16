@@ -119,8 +119,12 @@ class PairingStore:
         """Exchange a code for its token. One code, one token, then it is spent."""
         self.prune()
         want = (code or "").strip().lower()
-        for p in list(self._items.values()):
+        for token, p in list(self._items.items()):
             if hmac.compare_digest(p.code.lower(), want):
+                # Spend it. The docstring promised one code, one token; without
+                # this the same code worked until it expired.
+                p.code = ""
+                self._save()
                 return p
         return None
 
