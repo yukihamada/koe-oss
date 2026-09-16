@@ -52,3 +52,16 @@ First release. Local-first synthesis in your own voice on Apple Silicon.
 - CLI audit: 36/36 checks against real audio.
 - iOS contract: 26/26 checks against the live API.
 - Interop check against `koe-edge/src/consent.js`: no drift.
+
+## Unreleased
+
+### Distribution workaround
+
+No Developer ID certificate is available on the build machine, so the app
+cannot be signed for distribution and Gatekeeper blocks it. The block is the
+`com.apple.quarantine` attribute, not the signature: removing it lets the app
+run. `scripts/install.sh` copies the app to /Applications and clears that
+attribute. Verified: the app launches and serves /health.
+
+This is a workaround, not a fix. Proper distribution still needs a Developer
+ID certificate and `scripts/sign.sh sign`.
