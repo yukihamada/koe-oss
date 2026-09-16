@@ -55,3 +55,19 @@ jobs:
       # No GPU / no model on CI runners, so skip the synthesis steps.
       - name: CLI audit
         run: python tools/audit_cli.py --no-synth
+
+  cli-audit:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: CLI audit (no GPU on runners: skip synthesis)
+        run: python tools/audit_cli.py --no-synth
+      - name: Sign script syntax
+        run: sh -n scripts/sign.sh
