@@ -148,3 +148,34 @@ Removing it took the app from 1.2GB to 654MB, and the DMG to 292MB.
 - pyproject.toml had no license, authors, urls, classifiers, keywords or
   readme — it could not have been published to PyPI as-is. Added, plus an
   `apple` extra so `pip install "koe-oss[apple]"` is one command.
+
+## 0.1.1 — 2026-09-17
+
+**The macOS app is now signed and notarized.**
+
+```
+spctl: accepted
+source=Notarized Developer ID
+origin=Developer ID Application: Yuki Hamada (5BV85JW8US)
+```
+
+A Developer ID Application certificate was created through the Apple
+Developer site and imported with its private key. No longer blocked by
+Gatekeeper on other people's Macs.
+
+Three things had to be fixed to get notarization to pass:
+
+- `codesign --deep` does not sign every Mach-O binary. The notary rejected
+  unsigned `.so` files inside the bundled venv. Now every Mach-O file in the
+  bundle is signed explicitly.
+- The venv's `python` was a symlink chain out to the Homebrew prefix
+  (`venv/bin/python` → `python3.12` → `/opt/homebrew/...`). Inside a bundle
+  that points at a path the recipient does not have, and Gatekeeper rejected
+  it as an "invalid destination for symbolic link". The links are now resolved
+  to real files at build time. `readlink` alone was not enough — the chain
+  needed `readlink -f`.
+- The first notarization attempt returned `Invalid`; the log named the exact
+  unsigned binaries.
+
+The cask no longer needs to clear `com.apple.quarantine`, but it still does so
+for anyone who installed an earlier build.

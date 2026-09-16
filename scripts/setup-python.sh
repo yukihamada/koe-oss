@@ -63,5 +63,18 @@ echo "installing mlx-audio (slow)"
 echo "installing soundfile"
 "$VENV/bin/python" -m pip install --quiet soundfile
 
+# A venv's python symlinks out to the Homebrew prefix. Inside a bundle that is
+# a link pointing at a path that will not exist on the recipient's machine,
+# and Gatekeeper rejects the bundle for it ("invalid destination for symbolic
+# link"). Replace those links with real copies.
+echo "resolving symlinks in venv"
+find "$VENV" -type l | while read -r l; do
+    # -f resolves chains: venv/bin/python -> python3.12 -> ../Frameworks/...
+    t=$(readlink -f "$l" 2>/dev/null || readlink "$l")
+    if [ -e "$t" ]; then
+        rm "$l" && cp -R "$t" "$l" 2>/dev/null || true
+    fi
+done
+
 "$VENV/bin/python" -c "import koe_oss; print('koe_oss OK:', koe_oss.__file__)"
 echo "venv ready: $VENV"

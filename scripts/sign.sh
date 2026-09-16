@@ -136,11 +136,15 @@ Then re-run: $0 sign"
 
     log "=== signing with $identity ==="
 
-    # Sign nested items first (dylibs, helpers), then the bundle itself.
-    find "$APP/Contents" -type f \( -name "*.dylib" -o -name "*.framework" \) -print0 \
+    # Sign every Mach-O binary inside the bundle, then the bundle itself.
+    # --deep is not enough: it skips files nested in odd places, and the
+    # notary rejects any unsigned .so. The bundled venv has hundreds.
+    find "$APP/Contents" -type f -print0 \
         | while IFS= read -r -d '' f; do
-            codesign --force --options runtime --timestamp \
-                --sign "$identity" "$f" 2>/dev/null || true
+            if file "$f" | grep -q "Mach-O"; then
+                codesign --force --options runtime --timestamp \
+                    --sign "$identity" "$f" 2>/dev/null || true
+            fi
           done
 
     codesign --force --deep --options runtime --timestamp \
