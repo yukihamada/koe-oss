@@ -79,3 +79,12 @@ jobs:
         run: python tools/audit_cli.py --no-synth
       - name: Sign script syntax
         run: sh -n scripts/sign.sh
+
+  cask:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cask syntax
+        run: ruby -c Casks/koe-oss.rb
+      - name: Cask lint
+        run: brew style Casks/koe-oss.rb
