@@ -1,6 +1,9 @@
 """The request's temperature must reach the model (it was silently dropped before)."""
-import numpy as np
-import soundfile as sf
+import pytest
+
+# The core test suite runs without audio libraries; this one needs them to fake a model.
+np = pytest.importorskip("numpy")
+sf = pytest.importorskip("soundfile")
 
 from koe_oss.engines import mlx_qwen
 from koe_oss.engines.base import SynthRequest
