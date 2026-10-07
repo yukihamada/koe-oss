@@ -81,6 +81,11 @@ class MlxQwenEngine(SynthEngine):
             ref_audio=req.ref_audio,
             ref_text=req.ref_text or "",
             lang_code=_to_lang_name(req.lang),
+            # SynthRequest.temperature (0.5) was never passed on, so mlx-audio's 0.9 applied
+            # and the model garbled or dropped words often enough to hear. Measured
+            # 2026-10-07 on 187 Japanese sentences (Whisper transcripts, flagged lines
+            # judged by reading them, not by ear): 12 with a misreading at 0.9, 3 at 0.5.
+            temperature=req.temperature,
         ):
             chunks.append(np.asarray(r.audio))
         gen = time.time() - t0

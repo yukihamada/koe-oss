@@ -55,6 +55,13 @@ First release. Local-first synthesis in your own voice on Apple Silicon.
 
 ## Unreleased
 
+### Fewer garbled words
+
+The request's temperature (0.5) is now passed to the model. It was dropped
+before, so synthesis ran at mlx-audio's default of 0.9.
+On 187 Japanese sentences the number with a misreading fell from 12 to 3
+(Whisper transcripts, flagged lines judged by reading them; not verified by ear).
+
 ### Distribution workaround
 
 No Developer ID certificate is available on the build machine, so the app
